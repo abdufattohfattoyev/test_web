@@ -284,8 +284,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         // Supabase konfiguratsiyasi
-        const SUPABASE_URL = 'https://jwkgrkvornagxauwrduq.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3a2dya3Zvcm5hZ3hhdXdyZHVxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQwOTM4NDcsImV4cCI6MjA2OTY2OTg0N30.LOF8n-jJKzm9DcTTWu4QYrqWf7x7zLd3m29BlP8-n1I';
+        const SUPABASE_URL = 'https://lysrhbjijexdmecjkaec.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5c3JoYmppamV4ZG1lY2prYWVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQxNDkyOTIsImV4cCI6MjA2OTcyNTI5Mn0.CVljtJ4VKSFZvd8WaJD7pPYxEWZvlYsLi4wCQpbFbRo';
 
         // Supabase client yaratish
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
