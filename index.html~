@@ -312,8 +312,23 @@
             color: white;
         }
 
-        .test-action-btn:hover {
-            transform: translateY(-2px);
+        @media (max-width: 768px) {
+            .student-item {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -347,36 +362,31 @@
             <!-- Test Yaratish Formi -->
             <div class="card" id="createTestForm">
                 <h3>➕ Yangi Test Yaratish</h3>
-                <form id="testForm">
-                    <div style="margin-bottom: 15px;">
-                        <label for="testCode" style="display: block; font-weight: bold; margin-bottom: 5px;">Test Kodi:</label>
-                        <input type="text" id="testCode" placeholder="Masalan: TEST001"
-                               style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; text-transform: uppercase;">
-                    </div>
+                <div class="form-group">
+                    <label for="testCode" class="form-label">Test Kodi:</label>
+                    <input type="text" id="testCode" class="form-input" placeholder="Masalan: TEST001"
+                           style="text-transform: uppercase;">
+                </div>
 
-                    <div style="margin-bottom: 15px;">
-                        <label for="testTitle" style="display: block; font-weight: bold; margin-bottom: 5px;">Test Nomi:</label>
-                        <input type="text" id="testTitle" placeholder="Test nomini kiriting"
-                               style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
-                    </div>
+                <div class="form-group">
+                    <label for="testTitle" class="form-label">Test Nomi:</label>
+                    <input type="text" id="testTitle" class="form-input" placeholder="Test nomini kiriting">
+                </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-                        <div>
-                            <label for="openCount" style="display: block; font-weight: bold; margin-bottom: 5px;">Ochiq Savollar:</label>
-                            <input type="number" id="openCount" min="0" max="50" value="0"
-                                   style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
-                        </div>
-                        <div>
-                            <label for="closedCount" style="display: block; font-weight: bold; margin-bottom: 5px;">Yopiq Savollar:</label>
-                            <input type="number" id="closedCount" min="0" max="50" value="0"
-                                   style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
-                        </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="openCount" class="form-label">Ochiq Savollar:</label>
+                        <input type="number" id="openCount" class="form-input" min="0" max="50" value="0">
                     </div>
+                    <div class="form-group">
+                        <label for="closedCount" class="form-label">Yopiq Savollar:</label>
+                        <input type="number" id="closedCount" class="form-input" min="0" max="50" value="0">
+                    </div>
+                </div>
 
-                    <button type="button" onclick="createTest()" class="btn" style="width: 100%;">
-                        ➕ Test Yaratish
-                    </button>
-                </form>
+                <button type="button" onclick="createTest()" class="btn" style="width: 100%;">
+                    ➕ Test Yaratish
+                </button>
             </div>
 
             <!-- Javoblar Kiritish Qismi -->
@@ -462,48 +472,62 @@
         // Dashboard statistikasini yuklash
         async function loadDashboard() {
             try {
-                const [usersCount, testsCount, studentsCount, adminsCount] = await Promise.all([
+                document.getElementById('statsGrid').innerHTML = '<div class="loading">📊 Statistika yuklanmoqda...</div>';
+
+                const [usersResult, testsResult, studentsResult, adminsResult] = await Promise.all([
                     supabase.from('users').select('id', { count: 'exact' }),
                     supabase.from('tests').select('id', { count: 'exact' }),
                     supabase.from('students').select('id', { count: 'exact' }),
                     supabase.from('admins').select('id', { count: 'exact' })
                 ]);
 
+                const usersCount = usersResult.count || 0;
+                const testsCount = testsResult.count || 0;
+                const studentsCount = studentsResult.count || 0;
+                const adminsCount = adminsResult.count || 0;
+
                 const html = `
                     <div class="stat-card">
-                        <div class="stat-number">${usersCount.count || 0}</div>
+                        <div class="stat-number">${usersCount}</div>
                         <div class="stat-label">👥 Foydalanuvchilar</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number">${adminsCount.count || 0}</div>
+                        <div class="stat-number">${adminsCount}</div>
                         <div class="stat-label">👨‍💼 Adminlar</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number">${testsCount.count || 0}</div>
+                        <div class="stat-number">${testsCount}</div>
                         <div class="stat-label">📝 Testlar</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number">${studentsCount.count || 0}</div>
+                        <div class="stat-number">${studentsCount}</div>
                         <div class="stat-label">🎓 O'quvchilar</div>
                     </div>
                 `;
 
                 document.getElementById('statsGrid').innerHTML = html;
+
             } catch (error) {
                 console.error('Dashboard yuklanmadi:', error);
-                document.getElementById('statsGrid').innerHTML = '<div class="error">❌ Statistika yuklanmadi</div>';
+                document.getElementById('statsGrid').innerHTML = '<div class="error">❌ Statistika yuklanmadi: ' + error.message + '</div>';
             }
         }
 
         // Foydalanuvchilarni yuklash
         async function loadUsers() {
             try {
+                document.getElementById('usersList').innerHTML = '<div class="loading">👥 Foydalanuvchilar yuklanmoqda...</div>';
+
                 const { data: users, error } = await supabase
                     .from('users')
                     .select('*')
                     .order('created_at', { ascending: false });
 
-                if (error) throw error;
+                if (error) {
+                    console.error('Foydalanuvchilar yuklanmadi:', error);
+                    document.getElementById('usersList').innerHTML = '<div class="error">❌ Foydalanuvchilar yuklanmadi: ' + error.message + '</div>';
+                    return;
+                }
 
                 if (!users || users.length === 0) {
                     document.getElementById('usersList').innerHTML = '<div class="card">📭 Hozircha foydalanuvchilar yo\'q</div>';
@@ -525,15 +549,18 @@
                 });
 
                 document.getElementById('usersList').innerHTML = html;
+
             } catch (error) {
                 console.error('Foydalanuvchilar yuklanmadi:', error);
-                document.getElementById('usersList').innerHTML = '<div class="error">❌ Foydalanuvchilar yuklanmadi</div>';
+                document.getElementById('usersList').innerHTML = '<div class="error">❌ Foydalanuvchilar yuklanmadi: ' + error.message + '</div>';
             }
         }
 
         // Testlarni yuklash
         async function loadTests() {
             try {
+                document.getElementById('testsList').innerHTML = '<div class="loading">📝 Testlar yuklanmoqda...</div>';
+
                 const { data: tests, error } = await supabase
                     .from('tests')
                     .select(`
@@ -542,7 +569,11 @@
                     `)
                     .order('created_at', { ascending: false });
 
-                if (error) throw error;
+                if (error) {
+                    console.error('Testlar yuklanmadi:', error);
+                    document.getElementById('testsList').innerHTML = '<div class="error">❌ Testlar yuklanmadi: ' + error.message + '</div>';
+                    return;
+                }
 
                 if (!tests || tests.length === 0) {
                     document.getElementById('testsList').innerHTML = '<div class="card">📭 Hozircha testlar yo\'q</div>';
@@ -572,15 +603,18 @@
                 });
 
                 document.getElementById('testsList').innerHTML = html;
+
             } catch (error) {
                 console.error('Testlar yuklanmadi:', error);
-                document.getElementById('testsList').innerHTML = '<div class="error">❌ Testlar yuklanmadi</div>';
+                document.getElementById('testsList').innerHTML = '<div class="error">❌ Testlar yuklanmadi: ' + error.message + '</div>';
             }
         }
 
         // O'quvchilarni yuklash
         async function loadStudents() {
             try {
+                document.getElementById('studentsList').innerHTML = '<div class="loading">🎓 O\'quvchilar yuklanmoqda...</div>';
+
                 const { data: students, error } = await supabase
                     .from('students')
                     .select(`
@@ -589,7 +623,11 @@
                     `)
                     .order('started_at', { ascending: false });
 
-                if (error) throw error;
+                if (error) {
+                    console.error('O\'quvchilar yuklanmadi:', error);
+                    document.getElementById('studentsList').innerHTML = '<div class="error">❌ O\'quvchilar yuklanmadi: ' + error.message + '</div>';
+                    return;
+                }
 
                 if (!students || students.length === 0) {
                     document.getElementById('studentsList').innerHTML = '<div class="card">📭 Hozircha o\'quvchilar yo\'q</div>';
@@ -617,15 +655,18 @@
                 });
 
                 document.getElementById('studentsList').innerHTML = html;
+
             } catch (error) {
                 console.error('O\'quvchilar yuklanmadi:', error);
-                document.getElementById('studentsList').innerHTML = '<div class="error">❌ O\'quvchilar yuklanmadi</div>';
+                document.getElementById('studentsList').innerHTML = '<div class="error">❌ O\'quvchilar yuklanmadi: ' + error.message + '</div>';
             }
         }
 
         // Natijalarni yuklash
         async function loadResults() {
             try {
+                document.getElementById('resultsList').innerHTML = '<div class="loading">📈 Natijalar yuklanmoqda...</div>';
+
                 const { data: results, error } = await supabase
                     .from('students')
                     .select(`
@@ -636,7 +677,11 @@
                     .not('completed_at', 'is', null)
                     .order('completed_at', { ascending: false });
 
-                if (error) throw error;
+                if (error) {
+                    console.error('Natijalar yuklanmadi:', error);
+                    document.getElementById('resultsList').innerHTML = '<div class="error">❌ Natijalar yuklanmadi: ' + error.message + '</div>';
+                    return;
+                }
 
                 if (!results || results.length === 0) {
                     document.getElementById('resultsList').innerHTML = '<div class="card">📭 Hozircha natijalar yo\'q</div>';
@@ -661,9 +706,10 @@
                 });
 
                 document.getElementById('resultsList').innerHTML = html;
+
             } catch (error) {
                 console.error('Natijalar yuklanmadi:', error);
-                document.getElementById('resultsList').innerHTML = '<div class="error">❌ Natijalar yuklanmadi</div>';
+                document.getElementById('resultsList').innerHTML = '<div class="error">❌ Natijalar yuklanmadi: ' + error.message + '</div>';
             }
         }
 
@@ -1142,6 +1188,18 @@
                 console.error('Ma\'lumotlarni o\'chirishda xatolik:', error);
                 alert('❌ Xatolik yuz berdi!');
             }
+        }
+
+        // Barcha ma'lumotlarni yuklash
+        async function loadAllData() {
+            displayUserId();
+            await Promise.all([
+                loadDashboard(),
+                loadUsers(),
+                loadTests(),
+                loadStudents(),
+                loadResults()
+            ]);
         }
 
         // Sahifa yuklanganda
