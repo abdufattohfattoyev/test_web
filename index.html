@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Foydalanuvchi Ma'lumotlari</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 1.2em;
+        }
+
+        .user-card {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            transform: translateY(10px);
+            animation: slideUp 0.5s ease forwards;
+        }
+
+        @keyframes slideUp {
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        .user-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .info-item {
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            padding: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #333;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            color: #555;
+            font-size: 1.1em;
+            word-break: break-word;
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 5px solid #c62828;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-top: 20px;
+            transition: transform 0.2s;
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .user-info {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>👤 Foydalanuvchi Ma'lumotlari</h1>
+            <p>Telegram bot orqali ro'yxatdan o'tgan foydalanuvchilar</p>
+        </div>
+
+        <div id="content" class="loading">
+            <div>📊 Ma'lumotlar yuklanmoqda...</div>
+        </div>
+
+        <div style="text-align: center;">
+            <button class="refresh-btn" onclick="loadUsers()">🔄 Yangilash</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Supabase konfiguratsiyasi
+        const SUPABASE_URL = 'https://lysrhbjijexdmecjkaec.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5c3JoYmppamV4ZG1lY2prYWVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQxNDkyOTIsImV4cCI6MjA2OTcyNTI5Mn0.CVljtJ4VKSFZvd8WaJD7pPYxEWZvlYsLi4wCQpbFbRo';
+
+        // Supabase client yaratish
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Foydalanuvchilarni yuklash funksiyasi
+        async function loadUsers() {
+            const contentDiv = document.getElementById('content');
+            contentDiv.innerHTML = '<div class="loading">📊 Ma\'lumotlar yuklanmoqda...</div>';
+
+            try {
+                // Supabase'dan ma'lumotlarni olish
+                const { data: users, error } = await supabase
+                    .from('users') // 'users' jadval nomi
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) {
+                    throw error;
+                }
+
+                if (!users || users.length === 0) {
+                    contentDiv.innerHTML = '<div class="no-data">📭 Hozircha hech qanday foydalanuvchi yo\'q</div>';
+                    return;
+                }
+
+                // Foydalanuvchilarni ko'rsatish
+                let html = '';
+                users.forEach((user, index) => {
+                    html += `
+                        <div class="user-card" style="animation-delay: ${index * 0.1}s">
+                            <div class="user-info">
+                                <div class="info-item">
+                                    <div class="info-label">👤 Ism</div>
+                                    <div class="info-value">${user.first_name || 'Noma\'lum'}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">👥 Familiya</div>
+                                    <div class="info-value">${user.last_name || 'Noma\'lum'}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">🆔 Username</div>
+                                    <div class="info-value">@${user.username || 'Noma\'lum'}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">🔢 Telegram ID</div>
+                                    <div class="info-value">${user.telegram_id}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">📅 Ro'yxatdan o'tgan sana</div>
+                                    <div class="info-value">${new Date(user.created_at).toLocaleDateString('uz-UZ')}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">⏰ Vaqt</div>
+                                    <div class="info-value">${new Date(user.created_at).toLocaleTimeString('uz-UZ')}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                contentDiv.innerHTML = html;
+
+            } catch (error) {
+                console.error('Xatolik:', error);
+                contentDiv.innerHTML = `
+                    <div class="error">
+                        ❌ Ma'lumotlarni yuklashda xatolik yuz berdi: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Sahifa yuklanganda ma'lumotlarni olish
+        document.addEventListener('DOMContentLoaded', loadUsers);
+
+        // Har 30 soniyada avtomatik yangilash
+        setInterval(loadUsers, 30000);
+    </script>
+</body>
+</html>
