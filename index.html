@@ -1380,68 +1380,435 @@
             }
         }
 
-        // Javoblar kiritish qismini ko'rsatish
+        // Javoblar kiritish qismini ko'rsatish (yangilangan)
         function showAnswersSection(testId, openCount, closedCount) {
             const answersSection = document.getElementById('answersSection');
             answersSection.style.display = 'block';
 
             let html = '<div id="answersProgress"></div>';
 
-            // Ochiq savollar uchun
-            if (openCount > 0) {
-                html += '<h4>📖 Ochiq Savollar</h4>';
-                for (let i = 1; i <= openCount; i++) {
-                    html += `
-                        <div class="card" id="open-${i}">
-                            <div class="form-group">
-                                <label class="form-label">${i}-savol javobi:</label>
-                                <input type="text" id="openAnswer${i}" class="form-input"
-                                       placeholder="To'g'ri javobni kiriting" />
-                            </div>
-                            <button onclick="saveAnswer(${testId}, ${i}, 'open')" class="btn btn-success">
-                                💾 Saqlash
-                            </button>
-                        </div>
-                    `;
-                }
-            }
+            // Global answers object yaratish
+            window.testAnswers = {};
 
-            // Yopiq savollar uchun
+            // Yopiq savollar uchun (A, B, C, D formatida)
             if (closedCount > 0) {
-                html += '<h4>📋 Yopiq Savollar</h4>';
+                html += `
+                    <div class="card">
+                        <h4>📋 Yopiq Savollar (${closedCount} ta)</h4>
+                        <p style="color: #666; margin-bottom: 20px;">Har bir savol uchun to'g'ri javob variantini tanlang:</p>
+                `;
+
                 for (let i = 1; i <= closedCount; i++) {
                     html += `
-                        <div class="card" id="closed-${i}">
-                            <div class="form-group">
-                                <label class="form-label">${i}-savol javobi:</label>
-                                <select id="closedAnswer${i}" class="form-select">
-                                    <option value="">Javobni tanlang</option>
-                                    <option value="A">A</option>
-                                    <option value="B">B</option>
-                                    <option value="C">C</option>
-                                    <option value="D">D</option>
-                                </select>
+                        <div class="question-card" id="closed-${i}">
+                            <div class="question-header">
+                                <span class="question-number">${i}</span>
+                                <span class="question-label">-savol javobi:</span>
                             </div>
-                            <button onclick="saveAnswer(${testId}, ${i}, 'closed')" class="btn btn-success">
-                                💾 Saqlash
-                            </button>
+                            <div class="answer-options">
+                                <button class="answer-btn" onclick="selectAnswer('closed', ${i}, 'A')" data-answer="A">A</button>
+                                <button class="answer-btn" onclick="selectAnswer('closed', ${i}, 'B')" data-answer="B">B</button>
+                                <button class="answer-btn" onclick="selectAnswer('closed', ${i}, 'C')" data-answer="C">C</button>
+                                <button class="answer-btn" onclick="selectAnswer('closed', ${i}, 'D')" data-answer="D">D</button>
+                            </div>
+                            <div class="answer-status" id="status-closed-${i}">Javobni tanlang</div>
                         </div>
                     `;
                 }
+                html += '</div>';
+            }
+
+            // Ochiq savollar uchun
+            if (openCount > 0) {
+                html += `
+                    <div class="card">
+                        <h4>📖 Ochiq Savollar (${openCount} ta)</h4>
+                        <p style="color: #666; margin-bottom: 20px;">Har bir savol uchun to'g'ri javobni yozing:</p>
+                `;
+
+                for (let i = 1; i <= openCount; i++) {
+                    html += `
+                        <div class="question-card" id="open-${i}">
+                            <div class="question-header">
+                                <span class="question-number">${i}</span>
+                                <span class="question-label">-savol javobi:</span>
+                            </div>
+                            <input type="text" id="openAnswer${i}" class="answer-input"
+                                   placeholder="To'g'ri javobni kiriting..."
+                                   onchange="selectOpenAnswer(${i}, this.value)">
+                            <div class="answer-status" id="status-open-${i}">Javobni kiriting</div>
+                        </div>
+                    `;
+                }
+                html += '</div>';
             }
 
             html += `
-                <div class="card" style="text-align: center;">
-                    <h4>📊 Yakunlash</h4>
-                    <p>Barcha javoblarni kiritgandan keyin testni faollashtiring:</p>
-                    <button onclick="finishTestCreation(${testId})" class="btn btn-success" style="width: 100%;">
-                        ✅ Testni Faollashtirish
+                <div class="card save-section">
+                    <div class="save-info">
+                        <h4>💾 Javoblarni Saqlash</h4>
+                        <p>Barcha javoblarni kiritgandan keyin saqlang:</p>
+                        <div id="saveProgress" class="save-progress">
+                            <span id="answeredCount">0</span> / <span id="totalCount">${openCount + closedCount}</span> javob kiritildi
+                        </div>
+                    </div>
+                    <button onclick="saveAllAnswers(${testId})" class="btn btn-success save-all-btn" disabled>
+                        💾 Barcha Javoblarni Saqlash
                     </button>
                 </div>
             `;
 
             document.getElementById('answersContent').innerHTML = html;
-            updateProgress(testId);
+            updateAnswersProgress(testId, openCount, closedCount);
+
+            // CSS qo'shish
+            addAnswersSectionCSS();
+        }
+
+        // Yopiq savol javobini tanlash
+        function selectAnswer(type, questionNumber, answer) {
+            const questionId = `${type}-${questionNumber}`;
+            const buttons = document.querySelectorAll(`#${questionId} .answer-btn`);
+            const statusElement = document.getElementById(`status-${questionId}`);
+
+            // Barcha tugmalardan active classni olib tashlash
+            buttons.forEach(btn => btn.classList.remove('active'));
+
+            // Tanlangan tugmaga active class qo'shish
+            const selectedButton = document.querySelector(`#${questionId} .answer-btn[data-answer="${answer}"]`);
+            selectedButton.classList.add('active');
+
+            // Global object ga saqlash
+            if (!window.testAnswers) window.testAnswers = {};
+            window.testAnswers[`${type}_${questionNumber}`] = answer;
+
+            // Status yangilash
+            statusElement.textContent = `✅ Tanlandi: ${answer}`;
+            statusElement.style.color = '#28a745';
+
+            updateSaveButton();
+        }
+
+        // Ochiq savol javobini kiritish
+        function selectOpenAnswer(questionNumber, answer) {
+            const statusElement = document.getElementById(`status-open-${questionNumber}`);
+
+            if (!window.testAnswers) window.testAnswers = {};
+
+            if (answer && answer.trim()) {
+                window.testAnswers[`open_${questionNumber}`] = answer.trim();
+                statusElement.textContent = `✅ Kiritildi`;
+                statusElement.style.color = '#28a745';
+            } else {
+                delete window.testAnswers[`open_${questionNumber}`];
+                statusElement.textContent = `Javobni kiriting`;
+                statusElement.style.color = '#666';
+            }
+
+            updateSaveButton();
+        }
+
+        // Saqlash tugmasini yangilash
+        function updateSaveButton() {
+            const totalQuestions = parseInt(document.getElementById('totalCount').textContent);
+            const answeredCount = Object.keys(window.testAnswers || {}).length;
+
+            document.getElementById('answeredCount').textContent = answeredCount;
+
+            const saveButton = document.querySelector('.save-all-btn');
+            if (answeredCount === totalQuestions) {
+                saveButton.disabled = false;
+                saveButton.innerHTML = '💾 Barcha Javoblarni Saqlash';
+            } else {
+                saveButton.disabled = true;
+                saveButton.innerHTML = `💾 Saqlash (${answeredCount}/${totalQuestions})`;
+            }
+        }
+
+        // Barcha javoblarni saqlash
+        async function saveAllAnswers(testId) {
+            if (!window.testAnswers) {
+                alert('❌ Javoblar topilmadi!');
+                return;
+            }
+
+            const answers = Object.keys(window.testAnswers);
+            if (answers.length === 0) {
+                alert('❌ Hech qanday javob kiritilmagan!');
+                return;
+            }
+
+            // Tasdiqlash
+            if (!confirm(`Barcha javoblarni saqlashni tasdiqlaysizmi?\n\n${answers.length} ta javob saqlanadi.`)) {
+                return;
+            }
+
+            try {
+                // Loading ko'rsatish
+                document.querySelector('.save-all-btn').innerHTML = '⏳ Saqlanmoqda...';
+                document.querySelector('.save-all-btn').disabled = true;
+
+                // Barcha javoblarni database ga saqlash
+                const insertData = [];
+
+                for (const [key, value] of Object.entries(window.testAnswers)) {
+                    const [type, questionNumber] = key.split('_');
+                    insertData.push({
+                        test_id: testId,
+                        question_number: parseInt(questionNumber),
+                        question_type: type,
+                        correct_answer: value
+                    });
+                }
+
+                // Avval eski javoblarni o'chirish
+                await supabase
+                    .from('test_answers')
+                    .delete()
+                    .eq('test_id', testId);
+
+                // Yangi javoblarni qo'shish
+                const { error } = await supabase
+                    .from('test_answers')
+                    .insert(insertData);
+
+                if (error) throw error;
+
+                // Muvaffaqiyat
+                alert(`✅ ${insertData.length} ta javob muvaffaqiyatli saqlandi!`);
+
+                // Barcha question cardlarni muvaffaqiyat rangi bilan belgilash
+                document.querySelectorAll('.question-card').forEach(card => {
+                    card.style.borderLeft = '4px solid #28a745';
+                    card.style.background = 'linear-gradient(135deg, #d4edda, #c3e6cb)';
+                });
+
+                // Tugmani yangilash
+                document.querySelector('.save-all-btn').innerHTML = '✅ Saqlandi';
+                document.querySelector('.save-all-btn').style.background = '#28a745';
+
+                // Test yakunlash tugmasini ko'rsatish
+                setTimeout(() => {
+                    document.querySelector('.save-section').innerHTML += `
+                        <button onclick="finishTestCreation(${testId})" class="btn btn-success" style="width: 100%; margin-top: 15px;">
+                            🚀 Testni Faollashtirish
+                        </button>
+                    `;
+                }, 1000);
+
+            } catch (error) {
+                console.error('Javoblarni saqlashda xatolik:', error);
+                alert('❌ Javoblarni saqlashda xatolik: ' + error.message);
+
+                // Tugmani qayta tiklash
+                document.querySelector('.save-all-btn').innerHTML = '💾 Barcha Javoblarni Saqlash';
+                document.querySelector('.save-all-btn').disabled = false;
+            }
+        }
+
+        // CSS stillarini qo'shish
+        function addAnswersSectionCSS() {
+            if (document.getElementById('answersCSS')) return; // Agar allaqachon qo'shilgan bo'lsa
+
+            const style = document.createElement('style');
+            style.id = 'answersCSS';
+            style.textContent = `
+                .question-card {
+                    background: white;
+                    border: 2px solid #e9ecef;
+                    border-radius: 15px;
+                    padding: 20px;
+                    margin-bottom: 15px;
+                    transition: all 0.3s ease;
+                    border-left: 4px solid #667eea;
+                }
+
+                .question-card:hover {
+                    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+                    transform: translateY(-2px);
+                }
+
+                .question-header {
+                    display: flex;
+                    align-items: center;
+                    margin-bottom: 15px;
+                    font-weight: 600;
+                    color: #333;
+                }
+
+                .question-number {
+                    background: linear-gradient(135deg, #667eea, #764ba2);
+                    color: white;
+                    width: 35px;
+                    height: 35px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-weight: 700;
+                    margin-right: 12px;
+                    font-size: 1rem;
+                }
+
+                .question-label {
+                    font-size: 1.1rem;
+                }
+
+                .answer-options {
+                    display: grid;
+                    grid-template-columns: repeat(4, 1fr);
+                    gap: 10px;
+                    margin-bottom: 15px;
+                }
+
+                .answer-btn {
+                    background: #f8f9fa;
+                    border: 2px solid #e9ecef;
+                    border-radius: 12px;
+                    padding: 15px;
+                    font-size: 1.2rem;
+                    font-weight: 700;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    color: #333;
+                }
+
+                .answer-btn:hover {
+                    background: #e9ecef;
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                }
+
+                .answer-btn.active {
+                    background: linear-gradient(135deg, #667eea, #764ba2);
+                    color: white;
+                    border-color: #667eea;
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+                }
+
+                .answer-input {
+                    width: 100%;
+                    padding: 15px;
+                    border: 2px solid #e9ecef;
+                    border-radius: 12px;
+                    font-size: 1rem;
+                    margin-bottom: 10px;
+                    transition: all 0.3s ease;
+                }
+
+                .answer-input:focus {
+                    outline: none;
+                    border-color: #667eea;
+                    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+                }
+
+                .answer-status {
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                    color: #666;
+                    text-align: center;
+                    padding: 8px;
+                    background: #f8f9fa;
+                    border-radius: 8px;
+                }
+
+                .save-section {
+                    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+                    border: 2px solid #667eea;
+                    text-align: center;
+                }
+
+                .save-info h4 {
+                    color: #333;
+                    margin-bottom: 10px;
+                }
+
+                .save-progress {
+                    background: white;
+                    padding: 10px;
+                    border-radius: 8px;
+                    margin: 15px 0;
+                    font-weight: 600;
+                    color: #667eea;
+                }
+
+                .save-all-btn {
+                    width: 100%;
+                    padding: 15px;
+                    font-size: 1.1rem;
+                    font-weight: 700;
+                }
+
+                .save-all-btn:disabled {
+                    background: #6c757d;
+                    cursor: not-allowed;
+                    transform: none;
+                }
+
+                /* Mobile optimizations */
+                @media (max-width: 768px) {
+                    .answer-options {
+                        grid-template-columns: repeat(2, 1fr);
+                        gap: 8px;
+                    }
+
+                    .answer-btn {
+                        padding: 12px;
+                        font-size: 1.1rem;
+                    }
+
+                    .question-card {
+                        padding: 15px;
+                    }
+
+                    .question-number {
+                        width: 30px;
+                        height: 30px;
+                        font-size: 0.9rem;
+                    }
+                }
+
+                @media (max-width: 480px) {
+                    .answer-options {
+                        grid-template-columns: 1fr 1fr;
+                        gap: 6px;
+                    }
+
+                    .answer-btn {
+                        padding: 10px;
+                        font-size: 1rem;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Progress yangilash (soddalashtirilgan)
+        async function updateAnswersProgress(testId, openCount, closedCount) {
+            try {
+                const { data: savedAnswers } = await supabase
+                    .from('test_answers')
+                    .select('*')
+                    .eq('test_id', testId);
+
+                const totalAnswers = openCount + closedCount;
+                const savedCount = savedAnswers ? savedAnswers.length : 0;
+                const percentage = totalAnswers > 0 ? (savedCount / totalAnswers) * 100 : 0;
+
+                document.getElementById('answersProgress').innerHTML = `
+                    <div class="progress-container">
+                        <h4>📊 Javoblar Kiritish Jarayoni</h4>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${percentage}%"></div>
+                        </div>
+                        <p>Jami: ${totalAnswers} ta savol</p>
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error('Progress yangilashda xatolik:', error);
+            }
         }
 
         // Javobni saqlash
@@ -1776,7 +2143,21 @@
         // Natijalarni export qilish
         async function exportResults() {
             try {
-                const { data: results, error } = await supabase
+                // Test kodini so'rash
+                const testCode = prompt('📊 EXPORT QILISH\n\nQaysi test natijalarini export qilmoqchisiz?\nTest kodini kiriting (barcha testlar uchun bo\'sh qoldiring):');
+
+                if (testCode === null) return; // Bekor qilindi
+
+                // Tasdiqlash
+                const confirmMessage = testCode ?
+                    `"${testCode.toUpperCase()}" test natijalarini export qilishni tasdiqlaysizmi?` :
+                    'BARCHA test natijalarini export qilishni tasdiqlaysizmi?';
+
+                if (!confirm(confirmMessage)) return;
+
+                showLoading('resultsList', '📊 Export qilinmoqda...');
+
+                let query = supabase
                     .from('students')
                     .select(`
                         *,
@@ -1785,40 +2166,75 @@
                     .not('completed_at', 'is', null)
                     .order('completed_at', { ascending: false });
 
+                // Agar test kodi kiritilgan bo'lsa, filtrlash
+                if (testCode && testCode.trim()) {
+                    query = query.eq('test_code', testCode.trim().toUpperCase());
+                }
+
+                const { data: results, error } = await query;
+
                 if (error) throw error;
 
                 if (!results || results.length === 0) {
-                    alert('📭 Export qilinadigan natijalar yo\'q!');
+                    alert('📭 Export qilinadigan natijalar topilmadi!');
+                    loadResults(); // Sahifani qayta yuklash
                     return;
                 }
 
-                // CSV yaratish
-                let csv = 'Ism,Test Nomi,Test Kodi,Ball,Umumiy,Foiz,Boshlangan,Tugatilgan\n';
+                // Excel-style CSV yaratish
+                const BOM = '\uFEFF'; // UTF-8 BOM for Excel compatibility
+                let csv = BOM + 'T/r,Ism Familiya,Test Nomi,Test Kodi,To\'g\'ri Javoblar,Jami Savollar,Ball (%),' +
+                         'Boshlangan Sana,Boshlangan Vaqt,Tugatilgan Sana,Tugatilgan Vaqt,Sarflangan Vaqt\n';
 
-                results.forEach(result => {
-                    const testTitle = result.tests?.title || 'Noma\'lum';
-                    const startDate = new Date(result.started_at).toLocaleDateString('uz-UZ');
-                    const endDate = result.completed_at ? new Date(result.completed_at).toLocaleDateString('uz-UZ') : '';
+                results.forEach((result, index) => {
+                    const testTitle = result.tests?.title || 'Noma\'lum test';
+                    const startDate = new Date(result.started_at);
+                    const endDate = result.completed_at ? new Date(result.completed_at) : null;
 
-                    csv += `"${result.full_name}","${testTitle}","${result.test_code}",${result.score || 0},${result.total_questions},${result.percentage || 0},"${startDate}","${endDate}"\n`;
+                    const startDateStr = startDate.toLocaleDateString('uz-UZ');
+                    const startTimeStr = startDate.toLocaleTimeString('uz-UZ', {hour: '2-digit', minute: '2-digit'});
+                    const endDateStr = endDate ? endDate.toLocaleDateString('uz-UZ') : '';
+                    const endTimeStr = endDate ? endDate.toLocaleTimeString('uz-UZ', {hour: '2-digit', minute: '2-digit'}) : '';
+
+                    // Sarflangan vaqtni hisoblash
+                    let duration = '';
+                    if (endDate) {
+                        const diffMs = endDate - startDate;
+                        const diffMins = Math.floor(diffMs / 60000);
+                        const hours = Math.floor(diffMins / 60);
+                        const mins = diffMins % 60;
+                        duration = hours > 0 ? `${hours}s ${mins}d` : `${mins}d`;
+                    }
+
+                    csv += `${index + 1},"${result.full_name}","${testTitle}","${result.test_code}",` +
+                           `${result.score || 0},${result.total_questions},${result.percentage || 0}%,` +
+                           `"${startDateStr}","${startTimeStr}","${endDateStr}","${endTimeStr}","${duration}"\n`;
                 });
 
                 // Faylni yuklab olish
                 const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
                 const link = document.createElement('a');
                 const url = URL.createObjectURL(blob);
+
+                const fileName = testCode ?
+                    `${testCode.toUpperCase()}_natijalar_${new Date().toISOString().split('T')[0]}.csv` :
+                    `barcha_natijalar_${new Date().toISOString().split('T')[0]}.csv`;
+
                 link.setAttribute('href', url);
-                link.setAttribute('download', `test_results_${new Date().toISOString().split('T')[0]}.csv`);
+                link.setAttribute('download', fileName);
                 link.style.visibility = 'hidden';
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
+                URL.revokeObjectURL(url);
 
-                alert('✅ Natijalar muvaffaqiyatli export qilindi!');
+                alert(`✅ ${results.length} ta natija muvaffaqiyatli export qilindi!\n📁 Fayl: ${fileName}`);
+                loadResults(); // Sahifani qayta yuklash
 
             } catch (error) {
                 console.error('Export qilishda xatolik:', error);
-                alert('❌ Export qilishda xatolik yuz berdi!');
+                alert('❌ Export qilishda xatolik yuz berdi: ' + error.message);
+                loadResults(); // Sahifani qayta yuklash
             }
         }
 
