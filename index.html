@@ -45,7 +45,6 @@
             width: 100%;
         }
 
-        /* Header */
         .header {
             background: white;
             border-radius: var(--radius-xl);
@@ -79,7 +78,6 @@
             font-size: 0.875rem;
         }
 
-        /* Navigation Tabs */
         .tabs {
             display: flex;
             gap: 0.5rem;
@@ -117,7 +115,6 @@
             box-shadow: var(--shadow-sm);
         }
 
-        /* Content Areas */
         .content {
             background: white;
             border-radius: var(--radius-xl);
@@ -142,7 +139,6 @@
             color: var(--text-primary);
         }
 
-        /* Forms */
         .form-group {
             margin-bottom: 1.5rem;
         }
@@ -177,7 +173,6 @@
             gap: 1rem;
         }
 
-        /* Buttons */
         .btn {
             background: var(--primary-color);
             color: white;
@@ -235,7 +230,6 @@
             width: 100%;
         }
 
-        /* Stats Grid */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -271,7 +265,6 @@
             font-weight: 500;
         }
 
-        /* Welcome Message */
         .welcome-message {
             background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
             color: white;
@@ -292,18 +285,35 @@
             font-size: 0.875rem;
         }
 
-        /* Test Entry Form */
         .test-entry-form {
             max-width: 400px;
             margin: 0 auto;
         }
 
-        /* Loading and Messages */
         .loading {
             text-align: center;
             padding: 2rem;
             color: var(--text-secondary);
             font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .loading::before {
+            content: '';
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--text-secondary);
+            border-top: 2px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         .error {
@@ -327,7 +337,6 @@
             font-size: 0.875rem;
         }
 
-        /* List Items */
         .list-item {
             display: flex;
             align-items: center;
@@ -347,17 +356,24 @@
 
         .list-item-content {
             flex: 1;
+            overflow: hidden;
         }
 
         .list-item-title {
             font-weight: 600;
             color: var(--text-primary);
             margin-bottom: 0.25rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .list-item-subtitle {
             font-size: 0.75rem;
             color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .list-item-actions {
@@ -366,7 +382,6 @@
             flex-wrap: wrap;
         }
 
-        /* Status Badges */
         .status-badge {
             padding: 0.25rem 0.75rem;
             border-radius: var(--radius-lg);
@@ -384,7 +399,6 @@
             color: #dc2626;
         }
 
-        /* Floating Action Button */
         .fab {
             position: fixed;
             bottom: 1.5rem;
@@ -407,7 +421,6 @@
             transform: scale(1.1);
         }
 
-        /* Progress Bar */
         .progress-bar {
             background: var(--border-color);
             border-radius: var(--radius-lg);
@@ -423,7 +436,6 @@
             border-radius: var(--radius-lg);
         }
 
-        /* Test Management */
         .test-item {
             display: grid;
             grid-template-columns: 1fr auto;
@@ -481,7 +493,6 @@
             color: white;
         }
 
-        /* Question Input */
         .question-input {
             background: var(--secondary-color);
             border: 2px solid var(--border-color);
@@ -496,7 +507,6 @@
             border-color: var(--accent-color);
         }
 
-        /* Responsive Design */
         @media (max-width: 768px) {
             body {
                 padding: 0.5rem;
@@ -583,7 +593,6 @@
             }
         }
 
-        /* Utility Classes */
         .hidden {
             display: none !important;
         }
@@ -600,23 +609,15 @@
             margin-top: 1rem;
         }
 
-        /* Animation */
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .fade-in {
             animation: fadeIn 0.3s ease-out;
         }
 
-        /* Focus styles for accessibility */
         .btn:focus,
         .tab:focus,
         .form-input:focus {
@@ -627,14 +628,12 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
         <div class="header fade-in">
             <h1 id="pageTitle">📊 Test Tizimi</h1>
             <div class="user-info" id="userInfo">Yuklanmoqda...</div>
             <p class="page-description" id="pageDescription">Test tizimiga xush kelibsiz</p>
         </div>
 
-        <!-- Student Login Section -->
         <div id="studentLogin" class="student-only">
             <div class="content fade-in">
                 <div class="welcome-message">
@@ -662,22 +661,19 @@
             </div>
         </div>
 
-        <!-- Admin Navigation -->
         <div id="adminTabs" class="admin-only hidden">
             <div class="tabs fade-in">
-                <button class="tab active" onclick="showTab('dashboard')">📊 Dashboard</button>
-                <button class="tab" onclick="showTab('admin')">➕ Test Yaratish</button>
-                <button class="tab" onclick="showTab('users')">👥 Foydalanuvchilar</button>
-                <button class="tab" onclick="showTab('tests')">📝 Testlar</button>
-                <button class="tab" onclick="showTab('students')">🎓 O'quvchilar</button>
-                <button class="tab" onclick="showTab('results')">📈 Natijalar</button>
+                <button class="tab active" onclick="showTab('dashboard', event)">📊 Dashboard</button>
+                <button class="tab" onclick="showTab('admin', event)">➕ Test Yaratish</button>
+                <button class="tab" onclick="showTab('users', event)">👥 Foydalanuvchilar</button>
+                <button class="tab" onclick="showTab('tests', event)">📝 Testlar</button>
+                <button class="tab" onclick="showTab('students', event)">🎓 O'quvchilar</button>
+                <button class="tab" onclick="showTab('results', event)">📈 Natijalar</button>
             </div>
         </div>
 
-        <!-- Admin Content -->
         <div id="adminContent" class="admin-only hidden">
             <div class="content fade-in">
-                <!-- Dashboard Tab -->
                 <div id="dashboard" class="tab-content">
                     <h2 class="mb-4">📊 Umumiy Statistika</h2>
                     <div class="stats-grid" id="statsGrid">
@@ -685,10 +681,8 @@
                     </div>
                 </div>
 
-                <!-- Admin Tab -->
                 <div id="admin" class="tab-content hidden">
                     <h2 class="mb-4">➕ Test Yaratish</h2>
-
                     <div class="card">
                         <h3>Yangi Test Yaratish</h3>
                         <div class="form-group">
@@ -696,13 +690,11 @@
                             <input type="text" id="testCode" class="form-input"
                                    placeholder="Masalan: TEST001" style="text-transform: uppercase;">
                         </div>
-
                         <div class="form-group">
                             <label for="testTitle" class="form-label">Test Nomi</label>
                             <input type="text" id="testTitle" class="form-input"
                                    placeholder="Test nomini kiriting">
                         </div>
-
                         <div class="form-grid">
                             <div class="form-group">
                                 <label for="openCount" class="form-label">Ochiq Savollar</label>
@@ -715,17 +707,14 @@
                                        min="0" max="50" value="0">
                             </div>
                         </div>
-
                         <button type="button" onclick="createTest()" class="btn btn-full">
                             ➕ Test Yaratish
                         </button>
                     </div>
-
                     <div class="card hidden" id="answersSection">
                         <h3>📝 Javoblar Kiritish</h3>
                         <div id="answersContent"></div>
                     </div>
-
                     <div class="card">
                         <h3>🔧 Test Boshqaruv</h3>
                         <div class="form-grid">
@@ -738,25 +727,21 @@
                     </div>
                 </div>
 
-                <!-- Users Tab -->
                 <div id="users" class="tab-content hidden">
                     <h2 class="mb-4">👥 Foydalanuvchilar</h2>
                     <div id="usersList" class="loading">👥 Foydalanuvchilar yuklanmoqda...</div>
                 </div>
 
-                <!-- Tests Tab -->
                 <div id="tests" class="tab-content hidden">
                     <h2 class="mb-4">📝 Yaratilgan Testlar</h2>
                     <div id="testsList" class="loading">📝 Testlar yuklanmoqda...</div>
                 </div>
 
-                <!-- Students Tab -->
                 <div id="students" class="tab-content hidden">
                     <h2 class="mb-4">🎓 Test Topshirgan O'quvchilar</h2>
                     <div id="studentsList" class="loading">🎓 O'quvchilar yuklanmoqda...</div>
                 </div>
 
-                <!-- Results Tab -->
                 <div id="results" class="tab-content hidden">
                     <h2 class="mb-4">📈 Test Natijalari</h2>
                     <div id="resultsList" class="loading">📈 Natijalar yuklanmoqda...</div>
@@ -765,30 +750,24 @@
         </div>
     </div>
 
-    <!-- Floating Action Button -->
     <button class="fab" onclick="loadAllData()" title="Ma'lumotlarni yangilash">
         🔄
     </button>
 
-    <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // Supabase konfiguratsiyasi
         const SUPABASE_URL = 'https://jwkgrkvornagxauwrduq.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3a2dya3Zvcm5hZ3hhdXdyZHVxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQwOTM4NDcsImV4cCI6MjA2OTY2OTg0N30.LOF8n-jJKzm9DcTTWu4QYrqWf7x7zLd3m29BlP8-n1I';
 
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
         let currentUser = null;
         let isAdmin = false;
 
-        // URL parametrlaridan user_id olish
         function getUserIdFromUrl() {
             const params = new URLSearchParams(window.location.search);
             return params.get('user_id') || null;
         }
 
-        // Foydalanuvchi rolini aniqlash
         async function checkUserRole() {
             const userId = getUserIdFromUrl();
 
@@ -800,7 +779,7 @@
             try {
                 const { data: user, error } = await supabase
                     .from('users')
-                    .select('*')
+                    .select('telegram_id, full_name, first_name, is_admin')
                     .eq('telegram_id', userId)
                     .single();
 
@@ -824,20 +803,18 @@
             }
         }
 
-        // Admin interfeysi ko'rsatish
         function showAdminInterface() {
             document.getElementById('adminTabs').classList.remove('hidden');
             document.getElementById('adminContent').classList.remove('hidden');
             document.getElementById('studentLogin').classList.add('hidden');
 
             document.getElementById('pageTitle').textContent = '📊 Test Tizimi - Admin Panel';
-            document.getElementById('userInfo').textContent = `Admin: ${currentUser.full_name || currentUser.first_name}`;
+            document.getElementById('userInfo').textContent = `Admin: ${currentUser.full_name || currentUser.first_name || 'Noma\'lum'}`;
             document.getElementById('pageDescription').textContent = 'Barcha testlar va natijalar statistikasi';
 
             loadAllData();
         }
 
-        // Student interfeysi ko'rsatish
         function showStudentInterface() {
             document.getElementById('adminTabs').classList.add('hidden');
             document.getElementById('adminContent').classList.add('hidden');
@@ -845,12 +822,11 @@
 
             document.getElementById('pageTitle').textContent = '🎓 Test Tizimi';
             document.getElementById('userInfo').textContent = currentUser ?
-                `Foydalanuvchi: ${currentUser.full_name || currentUser.first_name}` :
+                `Foydalanuvchi: ${currentUser.full_name || currentUser.first_name || 'Noma\'lum'}` :
                 'Mehmon';
             document.getElementById('pageDescription').textContent = 'Test topshirish uchun ma\'lumotlaringizni kiriting';
         }
 
-        // Test boshlash
         async function startTest() {
             const testCode = document.getElementById('testCodeInput').value.trim().toUpperCase();
             const studentName = document.getElementById('studentName').value.trim();
@@ -868,7 +844,7 @@
             try {
                 const { data: test, error: testError } = await supabase
                     .from('tests')
-                    .select('*')
+                    .select('id, code, title, open_questions_count, closed_questions_count, is_active')
                     .eq('code', testCode)
                     .eq('is_active', true)
                     .single();
@@ -878,13 +854,21 @@
                     return;
                 }
 
+                const totalQuestions = (test.open_questions_count || 0) + (test.closed_questions_count || 0);
+                if (totalQuestions === 0) {
+                    showMessage('❌ Bu testda savollar mavjud emas!', 'error');
+                    return;
+                }
+
                 const { data: student, error: studentError } = await supabase
                     .from('students')
                     .insert([{
                         telegram_id: currentUser?.telegram_id || null,
                         full_name: studentName,
+                        test_id: test.id,
                         test_code: testCode,
-                        total_questions: test.open_questions_count + test.closed_questions_count
+                        total_questions: totalQuestions,
+                        started_at: new Date().toISOString()
                     }])
                     .select()
                     .single();
@@ -895,18 +879,152 @@
                     return;
                 }
 
-                showMessage('✅ Test muvaffaqiyatli boshlandi!', 'success');
-                console.log('Student ID:', student.id);
-                console.log('Test:', test);
+                showMessage('✅ Test muvaffaqiyatli boshlandi! Savollar yuklanmoqda...', 'success');
+                showTestQuestions(student.id, test);
 
             } catch (error) {
                 console.error('Test boshlashda xatolik:', error);
-                showMessage('❌ Testni boshlashda xatolik yuz berdi!', 'error');
+                showMessage('❌ Testni boshlashda xatolik yuz berdi: ' + error.message, 'error');
             }
         }
 
-        // Tab almashtirish
-        function showTab(tabName) {
+        function showTestQuestions(studentId, test) {
+            const studentLogin = document.getElementById('studentLogin');
+            studentLogin.innerHTML = `
+                <div class="content fade-in">
+                    <h2 class="mb-4">📝 ${test.title}</h2>
+                    <p><strong>Test Kodi:</strong> ${test.code}</p>
+                    <p><strong>Jami Savollar:</strong> ${(test.open_questions_count || 0) + (test.closed_questions_count || 0)}</p>
+                    <div id="questionsContainer" class="mt-4"></div>
+                    <button onclick="submitTest(${studentId}, ${test.id})" class="btn btn-success btn-full mt-4">
+                        ✅ Testni Yakunlash
+                    </button>
+                </div>
+            `;
+
+            let questionsHtml = '';
+            const totalQuestions = (test.open_questions_count || 0) + (test.closed_questions_count || 0);
+
+            for (let i = 1; i <= (test.open_questions_count || 0); i++) {
+                questionsHtml += `
+                    <div class="question-input">
+                        <label class="form-label">${i}-savol (Ochiq):</label>
+                        <input type="text" id="openAnswer${i}" class="form-input" placeholder="Javobingizni kiriting">
+                    </div>
+                `;
+            }
+
+            for (let i = 1; i <= (test.closed_questions_count || 0); i++) {
+                questionsHtml += `
+                    <div class="question-input">
+                        <label class="form-label">${i}-savol (Yopiq):</label>
+                        <select id="closedAnswer${i}" class="form-input">
+                            <option value="">Javobni tanlang</option>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="C">C</option>
+                            <option value="D">D</option>
+                        </select>
+                    </div>
+                `;
+            }
+
+            document.getElementById('questionsContainer').innerHTML = questionsHtml;
+        }
+
+        async function submitTest(studentId, testId) {
+            try {
+                const { data: test, error: testError } = await supabase
+                    .from('tests')
+                    .select('open_questions_count, closed_questions_count')
+                    .eq('id', testId)
+                    .single();
+
+                if (testError) throw testError;
+
+                const totalQuestions = (test.open_questions_count || 0) + (test.closed_questions_count || 0);
+                const answers = [];
+                let score = 0;
+
+                const { data: testAnswers, error: answersError } = await supabase
+                    .from('test_answers')
+                    .select('*')
+                    .eq('test_id', testId);
+
+                if (answersError) throw answersError;
+
+                for (let i = 1; i <= totalQuestions; i++) {
+                    const openAnswer = document.getElementById(`openAnswer${i}`);
+                    const closedAnswer = document.getElementById(`closedAnswer${i}`);
+
+                    let answer, questionType;
+                    if (openAnswer) {
+                        answer = openAnswer.value.trim();
+                        questionType = 'open';
+                    } else if (closedAnswer) {
+                        answer = closedAnswer.value;
+                        questionType = 'closed';
+                    }
+
+                    if (answer) {
+                        const correctAnswer = testAnswers.find(ans => ans.question_number === i && ans.question_type === questionType);
+                        const isCorrect = correctAnswer && answer === correctAnswer.correct_answer;
+
+                        if (isCorrect) score++;
+
+                        answers.push({
+                            student_id: studentId,
+                            test_id: testId,
+                            question_number: i,
+                            question_type: questionType,
+                            answer: answer,
+                            is_correct: isCorrect
+                        });
+                    }
+                }
+
+                const percentage = totalQuestions > 0 ? (score / totalQuestions) * 100 : 0;
+
+                const { error: studentError } = await supabase
+                    .from('students')
+                    .update({
+                        score,
+                        percentage,
+                        completed_at: new Date().toISOString()
+                    })
+                    .eq('id', studentId);
+
+                if (studentError) throw studentError;
+
+                const { error: answersError } = await supabase
+                    .from('student_answers')
+                    .insert(answers);
+
+                if (answersError) throw answersError;
+
+                document.getElementById('studentLogin').innerHTML = `
+                    <div class="content fade-in">
+                        <h2 class="mb-4">🎉 Test Yakunlandi!</h2>
+                        <div class="card">
+                            <p><strong>Natija:</strong> ${score}/${totalQuestions}</p>
+                            <p><strong>Foiz:</strong> ${percentage.toFixed(2)}%</p>
+                            <p><strong>Holati:</strong> ${percentage >= 70 ? '✅ O\'tdi' : '❌ O\'tmadi'}</p>
+                            <button onclick="showStudentInterface()" class="btn btn-success btn-full mt-4">
+                                🔄 Yangi Test Topshirish
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                showMessage('✅ Test muvaffaqiyatli yakunlandi!', 'success');
+
+            } catch (error) {
+                console.error('Test yakunlashda xatolik:', error);
+                showMessage('❌ Test yakunlashda xatolik: ' + error.message, 'error');
+            }
+        }
+
+        function showTab(tabName, event) {
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.classList.add('hidden');
             });
@@ -916,52 +1034,40 @@
             });
 
             document.getElementById(tabName).classList.remove('hidden');
-            event.target.classList.add('active');
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
 
-            // Tab ochilganda ma'lumotlarni yuklash
-            switch(tabName) {
-                case 'dashboard':
-                    loadDashboard();
-                    break;
-                case 'users':
-                    loadUsers();
-                    break;
-                case 'tests':
-                    loadTests();
-                    break;
-                case 'students':
-                    loadStudents();
-                    break;
-                case 'results':
-                    loadResults();
-                    break;
+            const tabHandlers = {
+                dashboard: loadDashboard,
+                users: loadUsers,
+                tests: loadTests,
+                students: loadStudents,
+                results: loadResults
+            };
+
+            if (tabHandlers[tabName] && isAdmin) {
+                tabHandlers[tabName]();
             }
         }
 
-        // Dashboard statistikasini yuklash
         async function loadDashboard() {
             if (!isAdmin) return;
 
             try {
                 document.getElementById('statsGrid').innerHTML = '<div class="loading">📊 Statistika yuklanmoqda...</div>';
 
-                const [usersResult, testsResult, studentsResult] = await Promise.all([
+                const [usersResult, testsResult, studentsResult, adminUsersResult] = await Promise.all([
                     supabase.from('users').select('id', { count: 'exact' }),
                     supabase.from('tests').select('id', { count: 'exact' }),
-                    supabase.from('students').select('id', { count: 'exact' })
+                    supabase.from('students').select('id', { count: 'exact' }),
+                    supabase.from('users').select('id', { count: 'exact' }).eq('is_admin', true)
                 ]);
 
                 const usersCount = usersResult.count || 0;
                 const testsCount = testsResult.count || 0;
                 const studentsCount = studentsResult.count || 0;
-
-                // Admin count ni alohida hisoblash
-                const { data: adminUsers } = await supabase
-                    .from('users')
-                    .select('id')
-                    .eq('is_admin', true);
-
-                const adminsCount = adminUsers ? adminUsers.length : 0;
+                const adminsCount = adminUsersResult.count || 0;
 
                 const html = `
                     <div class="stat-card fade-in">
@@ -986,11 +1092,10 @@
 
             } catch (error) {
                 console.error('Dashboard yuklanmadi:', error);
-                document.getElementById('statsGrid').innerHTML = '<div class="error">❌ Statistika yuklanmadi</div>';
+                document.getElementById('statsGrid').innerHTML = '<div class="error">❌ Statistika yuklanmadi: ' + error.message + '</div>';
             }
         }
 
-        // Test yaratish
         async function createTest() {
             if (!isAdmin) {
                 showMessage('❌ Sizda test yaratish huquqi yo\'q!', 'error');
@@ -999,10 +1104,9 @@
 
             const code = document.getElementById('testCode').value.trim().toUpperCase();
             const title = document.getElementById('testTitle').value.trim();
-            const openCount = parseInt(document.getElementById('openCount').value);
-            const closedCount = parseInt(document.getElementById('closedCount').value);
+            const openCount = parseInt(document.getElementById('openCount').value) || 0;
+            const closedCount = parseInt(document.getElementById('closedCount').value) || 0;
 
-            // Validatsiya
             if (!code || code.length < 3) {
                 showMessage('❌ Test kodi kamida 3 ta belgidan iborat bo\'lishi kerak!', 'error');
                 return;
@@ -1024,10 +1128,9 @@
             }
 
             try {
-                // Kod mavjudligini tekshirish
                 const { data: existingTest } = await supabase
                     .from('tests')
-                    .select('*')
+                    .select('id')
                     .eq('code', code)
                     .single();
 
@@ -1036,12 +1139,11 @@
                     return;
                 }
 
-                // Testni yaratish
                 const { data: testData, error: testError } = await supabase
                     .from('tests')
                     .insert([{
-                        code: code,
-                        title: title,
+                        code,
+                        title,
                         admin_id: currentUser.telegram_id,
                         open_questions_count: openCount,
                         closed_questions_count: closedCount,
@@ -1052,16 +1154,13 @@
 
                 if (testError) throw testError;
 
-                // Muvaffaqiyat xabari
                 showMessage('✅ Test muvaffaqiyatli yaratildi!', 'success');
 
-                // Formni tozalash
                 document.getElementById('testCode').value = '';
                 document.getElementById('testTitle').value = '';
                 document.getElementById('openCount').value = '0';
                 document.getElementById('closedCount').value = '0';
 
-                // Javoblar kiritish qismini ko'rsatish
                 if (openCount > 0 || closedCount > 0) {
                     showAnswersSection(testData.id, openCount, closedCount);
                 }
@@ -1072,14 +1171,12 @@
             }
         }
 
-        // Javoblar kiritish qismini ko'rsatish
         function showAnswersSection(testId, openCount, closedCount) {
             const answersSection = document.getElementById('answersSection');
             answersSection.classList.remove('hidden');
 
             let html = '<div id="answersProgress"></div>';
 
-            // Ochiq savollar uchun
             if (openCount > 0) {
                 html += '<h4>📖 Ochiq Savollar Javoblari</h4>';
                 for (let i = 1; i <= openCount; i++) {
@@ -1096,7 +1193,6 @@
                 }
             }
 
-            // Yopiq savollar uchun
             if (closedCount > 0) {
                 html += '<h4>📋 Yopiq Savollar Javoblari</h4>';
                 for (let i = 1; i <= closedCount; i++) {
@@ -1132,7 +1228,6 @@
             updateProgress(testId, openCount, closedCount);
         }
 
-        // Javobni saqlash
         async function saveAnswer(testId, questionNumber, questionType) {
             const inputId = questionType === 'open' ? `openAnswer${questionNumber}` : `closedAnswer${questionNumber}`;
             const answer = document.getElementById(inputId).value.trim();
@@ -1159,18 +1254,14 @@
 
                 if (error) throw error;
 
-                // Muvaffaqiyat belgisi
                 const container = document.getElementById(`${questionType}-${questionNumber}`);
                 container.classList.add('saved');
-
                 const button = container.querySelector('button');
                 button.innerHTML = '✅ Saqlandi';
                 button.disabled = true;
                 button.style.background = '#10b981';
 
                 showMessage('✅ Javob saqlandi!', 'success');
-
-                // Progressni yangilash
                 await updateProgress(testId, 0, 0);
 
             } catch (error) {
@@ -1179,23 +1270,22 @@
             }
         }
 
-        // Progress yangilash
         async function updateProgress(testId, openCount, closedCount) {
             try {
-                const { data: savedAnswers } = await supabase
-                    .from('test_answers')
-                    .select('*')
-                    .eq('test_id', testId);
-
                 const { data: test } = await supabase
                     .from('tests')
                     .select('open_questions_count, closed_questions_count')
                     .eq('id', testId)
                     .single();
 
+                const { data: savedAnswers } = await supabase
+                    .from('test_answers')
+                    .select('id')
+                    .eq('test_id', testId);
+
                 if (!test) return;
 
-                const totalAnswers = test.open_questions_count + test.closed_questions_count;
+                const totalAnswers = (test.open_questions_count || openCount) + (test.closed_questions_count || closedCount);
                 const savedCount = savedAnswers ? savedAnswers.length : 0;
                 const percentage = totalAnswers > 0 ? (savedCount / totalAnswers) * 100 : 0;
 
@@ -1214,18 +1304,17 @@
             }
         }
 
-        // Test yaratishni yakunlash
         async function finishTestCreation(testId) {
             try {
                 const { data: test } = await supabase
                     .from('tests')
-                    .select('*')
+                    .select('open_questions_count, closed_questions_count')
                     .eq('id', testId)
                     .single();
 
                 const { data: answers } = await supabase
                     .from('test_answers')
-                    .select('*')
+                    .select('id')
                     .eq('test_id', testId);
 
                 if (!test) {
@@ -1233,7 +1322,7 @@
                     return;
                 }
 
-                const expectedAnswers = test.open_questions_count + test.closed_questions_count;
+                const expectedAnswers = (test.open_questions_count || 0) + (test.closed_questions_count || 0);
                 const actualAnswers = answers ? answers.length : 0;
 
                 if (actualAnswers < expectedAnswers) {
@@ -1241,16 +1330,14 @@
                     return;
                 }
 
-                // Testni faollashtirish
                 await supabase
                     .from('tests')
                     .update({ is_active: true })
                     .eq('id', testId);
 
                 showMessage('🎉 Test muvaffaqiyatli yaratildi va faollashtirildi!', 'success');
-
-                // Javoblar qismini yashirish
                 document.getElementById('answersSection').classList.add('hidden');
+                loadTests();
 
             } catch (error) {
                 console.error('Test yakunlashda xatolik:', error);
@@ -1258,12 +1345,11 @@
             }
         }
 
-        // Faol testlarni yuklash
         async function loadActiveTests() {
             try {
                 const { data: tests, error } = await supabase
                     .from('tests')
-                    .select('*')
+                    .select('id, code, title, open_questions_count, closed_questions_count, is_active, created_at')
                     .eq('is_active', true)
                     .order('created_at', { ascending: false });
 
@@ -1272,16 +1358,15 @@
                 displayTestManagement(tests, 'Faol Testlar');
             } catch (error) {
                 console.error('Faol testlarni yuklashda xatolik:', error);
-                showMessage('❌ Faol testlarni yuklashda xatolik!', 'error');
+                showMessage('❌ Faol testlarni yuklashda xatolik: ' + error.message, 'error');
             }
         }
 
-        // Nofaol testlarni yuklash
         async function loadInactiveTests() {
             try {
                 const { data: tests, error } = await supabase
                     .from('tests')
-                    .select('*')
+                    .select('id, code, title, open_questions_count, closed_questions_count, is_active, created_at')
                     .eq('is_active', false)
                     .order('created_at', { ascending: false });
 
@@ -1290,11 +1375,10 @@
                 displayTestManagement(tests, 'Nofaol Testlar');
             } catch (error) {
                 console.error('Nofaol testlarni yuklashda xatolik:', error);
-                showMessage('❌ Nofaol testlarni yuklashda xatolik!', 'error');
+                showMessage('❌ Nofaol testlarni yuklashda xatolik: ' + error.message, 'error');
             }
         }
 
-        // Test boshqaruv ko'rinishini ko'rsatish
         function displayTestManagement(tests, title) {
             const container = document.getElementById('testManagement');
 
@@ -1304,14 +1388,13 @@
             }
 
             let html = `<h4>${title}</h4>`;
-
             tests.forEach(test => {
                 html += `
                     <div class="test-item">
                         <div>
                             <div class="test-code">${test.code}</div>
                             <div><strong>${test.title}</strong></div>
-                            <div>Ochiq: ${test.open_questions_count}, Yopiq: ${test.closed_questions_count}</div>
+                            <div>Ochiq: ${test.open_questions_count || 0}, Yopiq: ${test.closed_questions_count || 0}</div>
                             <div>Yaratilgan: ${new Date(test.created_at).toLocaleDateString('uz-UZ')}</div>
                         </div>
                         <div style="display: flex; flex-wrap: wrap; gap: 5px;">
@@ -1329,7 +1412,6 @@
             container.innerHTML = html;
         }
 
-        // Test statusini o'zgartirish
         async function toggleTestStatus(testId, isActive) {
             try {
                 const { error } = await supabase
@@ -1340,15 +1422,14 @@
                 if (error) throw error;
 
                 showMessage(`✅ Test ${isActive ? 'faollashtirildi' : 'nofaol qilindi'}!`, 'success');
-                loadActiveTests(); // Ro'yxatni yangilash
+                loadActiveTests();
 
             } catch (error) {
                 console.error('Test statusini o\'zgartirishda xatolik:', error);
-                showMessage('❌ Xatolik yuz berdi!', 'error');
+                showMessage('❌ Xatolik yuz berdi: ' + error.message, 'error');
             }
         }
 
-        // Testni o'chirish
         async function deleteTest(testId) {
             if (!confirm('Testni o\'chirishni tasdiqlaysizmi? Bu amal qaytarib bo\'lmaydi!')) {
                 return;
@@ -1363,24 +1444,25 @@
                 if (error) throw error;
 
                 showMessage('✅ Test o\'chirildi!', 'success');
-                loadActiveTests(); // Ro'yxatni yangilash
+                loadActiveTests();
 
             } catch (error) {
                 console.error('Testni o\'chirishda xatolik:', error);
-                showMessage('❌ Xatolik yuz berdi!', 'error');
+                showMessage('❌ Xatolik yuz berdi: ' + error.message, 'error');
             }
         }
 
-        // Test tafsilotlarini ko'rish
         async function viewTestDetails(testId) {
             try {
-                const [testResult, answersResult] = await Promise.all([
-                    supabase.from('tests').select('*').eq('id', testId).single(),
-                    supabase.from('test_answers').select('*').eq('test_id', testId)
+                const [testResult, answersResult, studentsResult] = await Promise.all([
+                    supabase.from('tests').select('id, code, title, is_active, open_questions_count, closed_questions_count, created_at').eq('id', testId).single(),
+                    supabase.from('test_answers').select('*').eq('test_id', testId),
+                    supabase.from('students').select('id').eq('test_id', testId)
                 ]);
 
                 const test = testResult.data;
                 const answers = answersResult.data || [];
+                const studentsCount = studentsResult.data ? studentsResult.data.length : 0;
 
                 if (!test) {
                     showMessage('❌ Test topilmadi!', 'error');
@@ -1393,8 +1475,9 @@
                         <p><strong>Kod:</strong> ${test.code}</p>
                         <p><strong>Nom:</strong> ${test.title}</p>
                         <p><strong>Status:</strong> ${test.is_active ? '✅ Faol' : '❌ Nofaol'}</p>
-                        <p><strong>Savollar:</strong> Ochiq: ${test.open_questions_count}, Yopiq: ${test.closed_questions_count}</p>
+                        <p><strong>Savollar:</strong> Ochiq: ${test.open_questions_count || 0}, Yopiq: ${test.closed_questions_count || 0}</p>
                         <p><strong>Javoblar soni:</strong> ${answers.length}</p>
+                        <p><strong>Ishtirokchilar:</strong> ${studentsCount}</p>
                         <p><strong>Yaratilgan:</strong> ${new Date(test.created_at).toLocaleDateString('uz-UZ')}</p>
                 `;
 
@@ -1406,17 +1489,19 @@
                     detailsHtml += '</ul>';
                 }
 
-                detailsHtml += '</div>';
+                detailsHtml += `
+                        <button onclick="showTab('admin', null)" class="btn btn-full mt-4">🔙 Ortga</button>
+                    </div>
+                `;
 
                 document.getElementById('testManagement').innerHTML = detailsHtml;
 
             } catch (error) {
                 console.error('Test tafsilotlarini yuklashda xatolik:', error);
-                showMessage('❌ Test tafsilotlarini yuklashda xatolik!', 'error');
+                showMessage('❌ Test tafsilotlarini yuklashda xatolik: ' + error.message, 'error');
             }
         }
 
-        // Foydalanuvchilarni yuklash
         async function loadUsers() {
             if (!isAdmin) return;
 
@@ -1425,7 +1510,7 @@
 
                 const { data: users, error } = await supabase
                     .from('users')
-                    .select('*')
+                    .select('telegram_id, full_name, first_name, is_admin, created_at')
                     .order('created_at', { ascending: false });
 
                 if (error) throw error;
@@ -1440,7 +1525,7 @@
                     html += `
                         <div class="list-item">
                             <div class="list-item-content">
-                                <div class="list-item-title">${user.full_name || user.first_name}</div>
+                                <div class="list-item-title">${user.full_name || user.first_name || 'Noma\'lum'}</div>
                                 <div class="list-item-subtitle">
                                     ID: ${user.telegram_id} |
                                     ${user.is_admin ? 'Admin' : 'Foydalanuvchi'} |
@@ -1460,11 +1545,10 @@
 
             } catch (error) {
                 console.error('Foydalanuvchilarni yuklashda xatolik:', error);
-                document.getElementById('usersList').innerHTML = '<div class="error">❌ Foydalanuvchilarni yuklashda xatolik</div>';
+                document.getElementById('usersList').innerHTML = '<div class="error">❌ Foydalanuvchilarni yuklashda xatolik: ' + error.message + '</div>';
             }
         }
 
-        // Testlarni yuklash
         async function loadTests() {
             if (!isAdmin) return;
 
@@ -1473,7 +1557,7 @@
 
                 const { data: tests, error } = await supabase
                     .from('tests')
-                    .select('*')
+                    .select('id, code, title, open_questions_count, closed_questions_count, is_active, created_at')
                     .order('created_at', { ascending: false });
 
                 if (error) throw error;
@@ -1490,7 +1574,7 @@
                             <div class="list-item-content">
                                 <div class="list-item-title">${test.code} - ${test.title}</div>
                                 <div class="list-item-subtitle">
-                                    Ochiq: ${test.open_questions_count}, Yopiq: ${test.closed_questions_count} |
+                                    Ochiq: ${test.open_questions_count || 0}, Yopiq: ${test.closed_questions_count || 0} |
                                     ${new Date(test.created_at).toLocaleDateString('uz-UZ')}
                                 </div>
                             </div>
@@ -1507,11 +1591,10 @@
 
             } catch (error) {
                 console.error('Testlarni yuklashda xatolik:', error);
-                document.getElementById('testsList').innerHTML = '<div class="error">❌ Testlarni yuklashda xatolik</div>';
+                document.getElementById('testsList').innerHTML = '<div class="error">❌ Testlarni yuklashda xatolik: ' + error.message + '</div>';
             }
         }
 
-        // O'quvchilarni yuklash
         async function loadStudents() {
             if (!isAdmin) return;
 
@@ -1520,8 +1603,12 @@
 
                 const { data: students, error } = await supabase
                     .from('students')
-                    .select('*')
-                    .order('created_at', { ascending: false });
+                    .select(`
+                        id, full_name, test_code, score, total_questions, percentage, started_at,
+                        tests!students_test_id_fkey(code, title)
+                    `)
+                    .order('started_at', { ascending: false })
+                    .range(0, 49);
 
                 if (error) throw error;
 
@@ -1534,21 +1621,23 @@
                 students.forEach(student => {
                     const score = student.score || 0;
                     const totalQuestions = student.total_questions || 1;
-                    const percentage = Math.round((score / totalQuestions) * 100);
+                    const percentage = student.percentage || Math.round((score / totalQuestions) * 100);
+                    const testTitle = student.tests?.title || 'Noma\'lum';
+                    const testCode = student.tests?.code || student.test_code;
 
                     html += `
                         <div class="list-item">
                             <div class="list-item-content">
                                 <div class="list-item-title">${student.full_name}</div>
                                 <div class="list-item-subtitle">
-                                    Test: ${student.test_code} |
+                                    Test: ${testCode} - ${testTitle} |
                                     Ball: ${score}/${totalQuestions} (${percentage}%) |
-                                    ${new Date(student.created_at).toLocaleDateString('uz-UZ')}
+                                    ${new Date(student.started_at).toLocaleDateString('uz-UZ')}
                                 </div>
                             </div>
                             <div class="list-item-actions">
                                 <span class="status-badge ${percentage >= 70 ? 'status-active' : 'status-inactive'}">
-                                    ${percentage}%
+                                    ${percentage >= 70 ? '✅ O\'tdi' : '❌ O\'tmadi'}
                                 </span>
                             </div>
                         </div>
@@ -1559,11 +1648,10 @@
 
             } catch (error) {
                 console.error('O\'quvchilarni yuklashda xatolik:', error);
-                document.getElementById('studentsList').innerHTML = '<div class="error">❌ O\'quvchilarni yuklashda xatolik</div>';
+                document.getElementById('studentsList').innerHTML = '<div class="error">❌ O\'quvchilarni yuklashda xatolik: ' + error.message + '</div>';
             }
         }
 
-        // Natijalarni yuklash
         async function loadResults() {
             if (!isAdmin) return;
 
@@ -1573,10 +1661,11 @@
                 const { data: results, error } = await supabase
                     .from('students')
                     .select(`
-                        *,
-                        tests!inner(code, title)
+                        id, full_name, test_code, score, total_questions, percentage, started_at, completed_at,
+                        tests!students_test_id_fkey(code, title)
                     `)
-                    .order('created_at', { ascending: false });
+                    .not('completed_at', 'is', null)
+                    .order('completed_at', { ascending: false });
 
                 if (error) throw error;
 
@@ -1589,16 +1678,18 @@
                 results.forEach(result => {
                     const score = result.score || 0;
                     const totalQuestions = result.total_questions || 1;
-                    const percentage = Math.round((score / totalQuestions) * 100);
+                    const percentage = result.percentage || Math.round((score / totalQuestions) * 100);
+                    const testTitle = result.tests?.title || 'Noma\'lum';
+                    const testCode = result.tests?.code || result.test_code;
 
                     html += `
                         <div class="list-item">
                             <div class="list-item-content">
                                 <div class="list-item-title">${result.full_name}</div>
                                 <div class="list-item-subtitle">
-                                    Test: ${result.tests?.code} - ${result.tests?.title} |
+                                    Test: ${testCode} - ${testTitle} |
                                     Ball: ${score}/${totalQuestions} (${percentage}%) |
-                                    ${new Date(result.created_at).toLocaleDateString('uz-UZ')}
+                                    Tugallangan: ${new Date(result.completed_at).toLocaleDateString('uz-UZ')}
                                 </div>
                             </div>
                             <div class="list-item-actions">
@@ -1614,23 +1705,20 @@
 
             } catch (error) {
                 console.error('Natijalarni yuklashda xatolik:', error);
-                document.getElementById('resultsList').innerHTML = '<div class="error">❌ Natijalarni yuklashda xatolik</div>';
+                document.getElementById('resultsList').innerHTML = '<div class="error">❌ Natijalarni yuklashda xatolik: ' + error.message + '</div>';
             }
         }
 
-        // Natijalarni eksport qilish
         function exportResults() {
-            showMessage('📊 Natijalar eksport funksiyasi ishlab chiqilmoqda...', 'info');
+            showMessage('📊 Natijalar eksport funksiyasi tez kunda ishlaydi!', 'info');
         }
 
-        // Eski ma'lumotlarni tozalash
         function clearOldData() {
             if (confirm('Eski ma\'lumotlarni o\'chirishni xohlaysizmi?')) {
-                showMessage('🗑️ Eski ma\'lumotlar tozalash funksiyasi ishlab chiqilmoqda...', 'info');
+                showMessage('🗑️ Eski ma\'lumotlar tozalash funksiyasi tez kunda ishlaydi!', 'info');
             }
         }
 
-        // Xabar ko'rsatish
         function showMessage(message, type = 'info') {
             const messageDiv = document.createElement('div');
             messageDiv.className = type === 'error' ? 'error' : 'success-message';
@@ -1648,19 +1736,16 @@
             }, 5000);
         }
 
-        // Barcha ma'lumotlarni yuklash
         function loadAllData() {
             if (isAdmin) {
-                loadDashboard();
+                showTab('dashboard', null);
             }
         }
 
-        // Sahifa yuklanganda
         document.addEventListener('DOMContentLoaded', function() {
             checkUserRole();
         });
 
-        // Keyboard navigation
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Tab') {
                 document.body.classList.add('keyboard-navigation');
@@ -1673,4 +1758,3 @@
     </script>
 </body>
 </html>
-
