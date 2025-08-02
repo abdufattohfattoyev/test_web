@@ -219,19 +219,101 @@
             transform: scale(1.1);
         }
 
-        @media (max-width: 768px) {
-            .student-item {
-                grid-template-columns: 1fr;
-                text-align: center;
-            }
+        .form-group {
+            margin-bottom: 20px;
+        }
 
-            .tabs {
-                flex-direction: column;
-            }
+        .form-label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+        }
 
-            .header h1 {
-                font-size: 2em;
-            }
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .answer-input {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .answer-input.current {
+            border-color: #667eea;
+            background: #f0f2ff;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #28a745;
+        }
+
+        .progress-bar {
+            background: #e9ecef;
+            border-radius: 10px;
+            height: 20px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            height: 100%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .test-action-btn {
+            padding: 8px 15px;
+            margin: 5px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        .btn-activate {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-deactivate {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+
+        .test-action-btn:hover {
+            transform: translateY(-2px);
         }
     </style>
 </head>
@@ -244,6 +326,7 @@
 
     <div class="tabs">
         <button class="tab active" onclick="showTab('dashboard')">📊 Dashboard</button>
+        <button class="tab" onclick="showTab('admin')">👨‍💼 Admin Panel</button>
         <button class="tab" onclick="showTab('users')">👥 Foydalanuvchilar</button>
         <button class="tab" onclick="showTab('tests')">📝 Testlar</button>
         <button class="tab" onclick="showTab('students')">🎓 O'quvchilar</button>
@@ -255,6 +338,63 @@
             <h2>📊 Umumiy Statistika</h2>
             <div class="stats-grid" id="statsGrid">
                 <div class="loading">📊 Statistika yuklanmoqda...</div>
+            </div>
+        </div>
+
+        <div id="admin" class="tab-content" style="display:none;">
+            <h2>👨‍💼 Admin Panel - Test Yaratish</h2>
+
+            <!-- Test Yaratish Formi -->
+            <div class="card" id="createTestForm">
+                <h3>➕ Yangi Test Yaratish</h3>
+                <form id="testForm">
+                    <div style="margin-bottom: 15px;">
+                        <label for="testCode" style="display: block; font-weight: bold; margin-bottom: 5px;">Test Kodi:</label>
+                        <input type="text" id="testCode" placeholder="Masalan: TEST001"
+                               style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; text-transform: uppercase;">
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label for="testTitle" style="display: block; font-weight: bold; margin-bottom: 5px;">Test Nomi:</label>
+                        <input type="text" id="testTitle" placeholder="Test nomini kiriting"
+                               style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                        <div>
+                            <label for="openCount" style="display: block; font-weight: bold; margin-bottom: 5px;">Ochiq Savollar:</label>
+                            <input type="number" id="openCount" min="0" max="50" value="0"
+                                   style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                        </div>
+                        <div>
+                            <label for="closedCount" style="display: block; font-weight: bold; margin-bottom: 5px;">Yopiq Savollar:</label>
+                            <input type="number" id="closedCount" min="0" max="50" value="0"
+                                   style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="createTest()" class="btn" style="width: 100%;">
+                        ➕ Test Yaratish
+                    </button>
+                </form>
+            </div>
+
+            <!-- Javoblar Kiritish Qismi -->
+            <div class="card" id="answersSection" style="display: none;">
+                <h3>📝 Javoblar Kiritish</h3>
+                <div id="answersContent"></div>
+            </div>
+
+            <!-- Test Boshqaruv Qismi -->
+            <div class="card">
+                <h3>🔧 Test Boshqaruv</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <button onclick="loadActiveTests()" class="btn">📝 Faol Testlar</button>
+                    <button onclick="loadInactiveTests()" class="btn">🚫 Nofaol Testlar</button>
+                    <button onclick="exportResults()" class="btn">📊 Natijalarni Export</button>
+                    <button onclick="clearOldData()" class="btn" style="background: #f44336;">🗑️ Eski Ma'lumotlarni O'chirish</button>
+                </div>
+                <div id="testManagement" style="margin-top: 20px;"></div>
             </div>
         </div>
 
@@ -527,16 +667,481 @@
             }
         }
 
-        // Barcha ma'lumotlarni yuklash
-        async function loadAllData() {
-            displayUserId();
-            await Promise.all([
-                loadDashboard(),
-                loadUsers(),
-                loadTests(),
-                loadStudents(),
-                loadResults()
-            ]);
+        // Test yaratish funksiyasi
+        async function createTest() {
+            const code = document.getElementById('testCode').value.trim().toUpperCase();
+            const title = document.getElementById('testTitle').value.trim();
+            const openCount = parseInt(document.getElementById('openCount').value);
+            const closedCount = parseInt(document.getElementById('closedCount').value);
+
+            // Validatsiya
+            if (!code || code.length < 3) {
+                alert('❌ Test kodi kamida 3 ta belgidan iborat bo\'lishi kerak!');
+                return;
+            }
+
+            if (!title || title.length < 3) {
+                alert('❌ Test nomi kamida 3 ta belgidan iborat bo\'lishi kerak!');
+                return;
+            }
+
+            if (openCount + closedCount === 0) {
+                alert('❌ Kamida bitta savol bo\'lishi kerak!');
+                return;
+            }
+
+            if (openCount > 50 || closedCount > 50) {
+                alert('❌ Har bir tur uchun maksimal 50 ta savol!');
+                return;
+            }
+
+            try {
+                // Kod mavjudligini tekshirish
+                const existingTest = await supabase
+                    .from('tests')
+                    .select('*')
+                    .eq('code', code)
+                    .single();
+
+                if (existingTest.data) {
+                    alert('❌ Bu kod allaqachon mavjud! Boshqa kod tanlang.');
+                    return;
+                }
+            } catch (error) {
+                // Test topilmadi - davom etish mumkin
+            }
+
+            try {
+                // Testni yaratish
+                const { data: testData, error: testError } = await supabase
+                    .from('tests')
+                    .insert([{
+                        code: code,
+                        title: title,
+                        admin_id: getUserIdFromUrl(),
+                        open_questions_count: openCount,
+                        closed_questions_count: closedCount,
+                        is_active: true
+                    }])
+                    .select()
+                    .single();
+
+                if (testError) throw testError;
+
+                // Muvaffaqiyat xabari
+                document.getElementById('createTestForm').innerHTML = `
+                    <div class="success-message">
+                        <h3>✅ Test muvaffaqiyatli yaratildi!</h3>
+                        <p><strong>Kod:</strong> ${code}</p>
+                        <p><strong>Nom:</strong> ${title}</p>
+                        <p><strong>Ochiq savollar:</strong> ${openCount}</p>
+                        <p><strong>Yopiq savollar:</strong> ${closedCount}</p>
+                    </div>
+                    <button onclick="location.reload()" class="btn">🔄 Yangi Test Yaratish</button>
+                `;
+
+                // Javoblar kiritish qismini ko'rsatish
+                if (openCount > 0 || closedCount > 0) {
+                    showAnswersSection(testData.id, openCount, closedCount);
+                }
+
+            } catch (error) {
+                console.error('Test yaratishda xatolik:', error);
+                alert('❌ Test yaratishda xatolik yuz berdi: ' + error.message);
+            }
+        }
+
+        // Javoblar kiritish qismini ko'rsatish
+        function showAnswersSection(testId, openCount, closedCount) {
+            const answersSection = document.getElementById('answersSection');
+            answersSection.style.display = 'block';
+
+            let html = '<div id="answersProgress"></div>';
+
+            // Ochiq savollar uchun
+            if (openCount > 0) {
+                html += '<h4>📖 Ochiq Savollar Javoblari</h4>';
+                for (let i = 1; i <= openCount; i++) {
+                    html += `
+                        <div class="answer-input" id="open-${i}">
+                            <label class="form-label">${i}-savol javobi:</label>
+                            <input type="text" id="openAnswer${i}" class="form-input"
+                                   placeholder="To'g'ri javobni kiriting" />
+                            <button onclick="saveAnswer(${testId}, ${i}, 'open')" class="btn" style="margin-top: 10px;">
+                                💾 Saqlash
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+
+            // Yopiq savollar uchun
+            if (closedCount > 0) {
+                html += '<h4>📋 Yopiq Savollar Javoblari</h4>';
+                for (let i = 1; i <= closedCount; i++) {
+                    html += `
+                        <div class="answer-input" id="closed-${i}">
+                            <label class="form-label">${i}-savol javobi:</label>
+                            <select id="closedAnswer${i}" class="form-input">
+                                <option value="">Javobni tanlang</option>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                                <option value="D">D</option>
+                            </select>
+                            <button onclick="saveAnswer(${testId}, ${i}, 'closed')" class="btn" style="margin-top: 10px;">
+                                💾 Saqlash
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+
+            html += `
+                <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                    <h4>📊 Yakunlash</h4>
+                    <p>Barcha javoblarni kiritgandan keyin testni faollashtiring:</p>
+                    <button onclick="finishTestCreation(${testId})" class="btn" style="background: #28a745;">
+                        ✅ Testni Yakunlash
+                    </button>
+                </div>
+            `;
+
+            document.getElementById('answersContent').innerHTML = html;
+            updateProgress(testId, openCount, closedCount);
+        }
+
+        // Javobni saqlash
+        async function saveAnswer(testId, questionNumber, questionType) {
+            const inputId = questionType === 'open' ? `openAnswer${questionNumber}` : `closedAnswer${questionNumber}`;
+            const answer = document.getElementById(inputId).value.trim();
+
+            if (!answer) {
+                alert('❌ Javobni kiriting!');
+                return;
+            }
+
+            if (questionType === 'closed' && !['A', 'B', 'C', 'D'].includes(answer)) {
+                alert('❌ Faqat A, B, C yoki D ni tanlang!');
+                return;
+            }
+
+            try {
+                const { error } = await supabase
+                    .from('test_answers')
+                    .upsert([{
+                        test_id: testId,
+                        question_number: questionNumber,
+                        question_type: questionType,
+                        correct_answer: answer
+                    }]);
+
+                if (error) throw error;
+
+                // Muvaffaqiyat belgisi
+                const container = document.getElementById(`${questionType}-${questionNumber}`);
+                container.style.background = '#d4edda';
+                container.style.borderColor = '#28a745';
+
+                const button = container.querySelector('button');
+                button.innerHTML = '✅ Saqlandi';
+                button.disabled = true;
+                button.style.background = '#28a745';
+
+                // Progressni yangilash
+                await updateProgress(testId, 0, 0);
+
+            } catch (error) {
+                console.error('Javobni saqlashda xatolik:', error);
+                alert('❌ Javobni saqlashda xatolik: ' + error.message);
+            }
+        }
+
+        // Progress yangilash
+        async function updateProgress(testId, openCount, closedCount) {
+            try {
+                const { data: savedAnswers } = await supabase
+                    .from('test_answers')
+                    .select('*')
+                    .eq('test_id', testId);
+
+                const totalAnswers = openCount + closedCount;
+                const savedCount = savedAnswers ? savedAnswers.length : 0;
+                const percentage = totalAnswers > 0 ? (savedCount / totalAnswers) * 100 : 0;
+
+                document.getElementById('answersProgress').innerHTML = `
+                    <div style="margin-bottom: 20px;">
+                        <h4>📊 Javoblar Kiritish Jarayoni</h4>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${percentage}%"></div>
+                        </div>
+                        <p>${savedCount}/${totalAnswers} javob kiritildi (${Math.round(percentage)}%)</p>
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error('Progress yangilashda xatolik:', error);
+            }
+        }
+
+        // Test yaratishni yakunlash
+        async function finishTestCreation(testId) {
+            try {
+                const { data: test } = await supabase
+                    .from('tests')
+                    .select('*')
+                    .eq('id', testId)
+                    .single();
+
+                const { data: answers } = await supabase
+                    .from('test_answers')
+                    .select('*')
+                    .eq('test_id', testId);
+
+                const expectedAnswers = test.data.open_questions_count + test.data.closed_questions_count;
+                const actualAnswers = answers ? answers.length : 0;
+
+                if (actualAnswers < expectedAnswers) {
+                    alert(`❌ Barcha javoblarni kiriting! ${actualAnswers}/${expectedAnswers} kiritildi.`);
+                    return;
+                }
+
+                // Testni faollashtirish
+                await supabase
+                    .from('tests')
+                    .update({ is_active: true })
+                    .eq('id', testId);
+
+                alert('🎉 Test muvaffaqiyatli yaratildi va faollashtirildi!');
+                location.reload();
+
+            } catch (error) {
+                console.error('Test yakunlashda xatolik:', error);
+                alert('❌ Xatolik yuz berdi: ' + error.message);
+            }
+        }
+
+        // Faol testlarni yuklash
+        async function loadActiveTests() {
+            try {
+                const { data: tests, error } = await supabase
+                    .from('tests')
+                    .select('*')
+                    .eq('is_active', true)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                displayTestManagement(tests, 'Faol Testlar');
+            } catch (error) {
+                console.error('Faol testlarni yuklashda xatolik:', error);
+            }
+        }
+
+        // Nofaol testlarni yuklash
+        async function loadInactiveTests() {
+            try {
+                const { data: tests, error } = await supabase
+                    .from('tests')
+                    .select('*')
+                    .eq('is_active', false)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                displayTestManagement(tests, 'Nofaol Testlar');
+            } catch (error) {
+                console.error('Nofaol testlarni yuklashda xatolik:', error);
+            }
+        }
+
+        // Test boshqaruv ko'rinishini ko'rsatish
+        function displayTestManagement(tests, title) {
+            const container = document.getElementById('testManagement');
+
+            if (!tests || tests.length === 0) {
+                container.innerHTML = `<p>📭 ${title} yo'q</p>`;
+                return;
+            }
+
+            let html = `<h4>${title}</h4>`;
+
+            tests.forEach(test => {
+                html += `
+                    <div class="test-item">
+                        <div>
+                            <div class="test-code">${test.code}</div>
+                            <div><strong>${test.title}</strong></div>
+                            <div>Ochiq: ${test.open_questions_count}, Yopiq: ${test.closed_questions_count}</div>
+                            <div>Yaratilgan: ${new Date(test.created_at).toLocaleDateString('uz-UZ')}</div>
+                        </div>
+                        <div>
+                            ${test.is_active ?
+                                `<button onclick="toggleTestStatus(${test.id}, false)" class="test-action-btn btn-deactivate">🚫 Nofaol qilish</button>` :
+                                `<button onclick="toggleTestStatus(${test.id}, true)" class="test-action-btn btn-activate">✅ Faollashtirish</button>`
+                            }
+                            <button onclick="deleteTest(${test.id})" class="test-action-btn btn-delete">🗑️ O'chirish</button>
+                            <button onclick="viewTestDetails(${test.id})" class="test-action-btn" style="background: #17a2b8; color: white;">👁️ Ko'rish</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Test statusini o'zgartirish
+        async function toggleTestStatus(testId, isActive) {
+            try {
+                const { error } = await supabase
+                    .from('tests')
+                    .update({ is_active: isActive })
+                    .eq('id', testId);
+
+                if (error) throw error;
+
+                alert(`✅ Test ${isActive ? 'faollashtirildi' : 'nofaol qilindi'}!`);
+                loadActiveTests(); // Ro'yxatni yangilash
+
+            } catch (error) {
+                console.error('Test statusini o\'zgartirishda xatolik:', error);
+                alert('❌ Xatolik yuz berdi!');
+            }
+        }
+
+        // Testni o'chirish
+        async function deleteTest(testId) {
+            if (!confirm('Testni o\'chirishni tasdiqlaysizmi? Bu amal qaytarib bo\'lmaydi!')) {
+                return;
+            }
+
+            try {
+                const { error } = await supabase
+                    .from('tests')
+                    .delete()
+                    .eq('id', testId);
+
+                if (error) throw error;
+
+                alert('✅ Test o\'chirildi!');
+                loadActiveTests(); // Ro'yxatni yangilash
+
+            } catch (error) {
+                console.error('Testni o\'chirishda xatolik:', error);
+                alert('❌ Xatolik yuz berdi!');
+            }
+        }
+
+        // Test tafsilotlarini ko'rish
+        async function viewTestDetails(testId) {
+            try {
+                const [testResult, answersResult, studentsResult] = await Promise.all([
+                    supabase.from('tests').select('*').eq('id', testId).single(),
+                    supabase.from('test_answers').select('*').eq('test_id', testId),
+                    supabase.from('students').select('*').eq('test_id', testId)
+                ]);
+
+                const test = testResult.data;
+                const answers = answersResult.data || [];
+                const students = studentsResult.data || [];
+
+                let detailsHtml = `
+                    <h4>📋 Test Tafsilotlari</h4>
+                    <p><strong>Kod:</strong> ${test.code}</p>
+                    <p><strong>Nom:</strong> ${test.title}</p>
+                    <p><strong>Status:</strong> ${test.is_active ? '✅ Faol' : '❌ Nofaol'}</p>
+                    <p><strong>Savollar:</strong> Ochiq: ${test.open_questions_count}, Yopiq: ${test.closed_questions_count}</p>
+                    <p><strong>Javoblar soni:</strong> ${answers.length}</p>
+                    <p><strong>Ishtirokchilar:</strong> ${students.length}</p>
+                    <p><strong>Yaratilgan:</strong> ${new Date(test.created_at).toLocaleDateString('uz-UZ')}</p>
+                `;
+
+                if (answers.length > 0) {
+                    detailsHtml += '<h5>📝 To\'g\'ri Javoblar:</h5>';
+                    answers.forEach(answer => {
+                        detailsHtml += `<p>${answer.question_type} ${answer.question_number}: <strong>${answer.correct_answer}</strong></p>`;
+                    });
+                }
+
+                document.getElementById('testManagement').innerHTML = detailsHtml;
+
+            } catch (error) {
+                console.error('Test tafsilotlarini olishda xatolik:', error);
+                alert('❌ Xatolik yuz berdi!');
+            }
+        }
+
+        // Natijalarni export qilish
+        async function exportResults() {
+            try {
+                const { data: results, error } = await supabase
+                    .from('students')
+                    .select(`
+                        *,
+                        tests(title, code)
+                    `)
+                    .not('completed_at', 'is', null)
+                    .order('completed_at', { ascending: false });
+
+                if (error) throw error;
+
+                if (!results || results.length === 0) {
+                    alert('📭 Export qilinadigan natijalar yo\'q!');
+                    return;
+                }
+
+                // CSV yaratish
+                let csv = 'Ism,Test Nomi,Test Kodi,Ball,Umumiy,Foiz,Boshlangan,Tugatilgan\n';
+
+                results.forEach(result => {
+                    csv += `"${result.full_name}","${result.tests?.title}","${result.test_code}",${result.score},${result.total_questions},${result.percentage},"${new Date(result.started_at).toLocaleDateString('uz-UZ')}","${new Date(result.completed_at).toLocaleDateString('uz-UZ')}"\n`;
+                });
+
+                // Faylni yuklab olish
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', `test_results_${new Date().toISOString().split('T')[0]}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                alert('✅ Natijalar muvaffaqiyatli export qilindi!');
+
+            } catch (error) {
+                console.error('Export qilishda xatolik:', error);
+                alert('❌ Export qilishda xatolik yuz berdi!');
+            }
+        }
+
+        // Eski ma'lumotlarni o'chirish
+        async function clearOldData() {
+            const confirmText = prompt('Eski ma\'lumotlarni o\'chirish uchun "DELETE" so\'zini kiriting:');
+
+            if (confirmText !== 'DELETE') {
+                alert('❌ Bekor qilindi!');
+                return;
+            }
+
+            try {
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+                // 30 kundan eski ma'lumotlarni o'chirish
+                await supabase
+                    .from('students')
+                    .delete()
+                    .lt('created_at', thirtyDaysAgo.toISOString());
+
+                alert('✅ 30 kundan eski ma\'lumotlar o\'chirildi!');
+                loadAllData();
+
+            } catch (error) {
+                console.error('Ma\'lumotlarni o\'chirishda xatolik:', error);
+                alert('❌ Xatolik yuz berdi!');
+            }
         }
 
         // Sahifa yuklanganda

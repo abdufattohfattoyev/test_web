@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Tizimi - Admin Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header .user-id {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            display: inline-block;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            background: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            min-height: 400px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 1.2em;
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 5px solid #c62828;
+        }
+
+        .card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            color: #333;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 1.1em;
+            opacity: 0.8;
+        }
+
+        .test-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: #fafafa;
+        }
+
+        .test-code {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+
+        .test-status {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .status-active {
+            background: #4caf50;
+            color: white;
+        }
+
+        .status-inactive {
+            background: #f44336;
+            color: white;
+        }
+
+        .student-item {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 15px;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: #fafafa;
+        }
+
+        .score {
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .score-high { background: #4caf50; color: white; }
+        .score-medium { background: #ff9800; color: white; }
+        .score-low { background: #f44336; color: white; }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: transform 0.2s;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .refresh-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-size: 1.5em;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+
+        .refresh-btn:hover {
+            transform: scale(1.1);
+        }
+
+        @media (max-width: 768px) {
+            .student-item {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 Test Tizimi Admin Panel</h1>
+        <div class="user-id" id="userIdDisplay">ID: Yuklanmoqda...</div>
+        <p>Barcha testlar va natijalar statistikasi</p>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" onclick="showTab('dashboard')">📊 Dashboard</button>
+        <button class="tab" onclick="showTab('users')">👥 Foydalanuvchilar</button>
+        <button class="tab" onclick="showTab('tests')">📝 Testlar</button>
+        <button class="tab" onclick="showTab('students')">🎓 O'quvchilar</button>
+        <button class="tab" onclick="showTab('results')">📈 Natijalar</button>
+    </div>
+
+    <div class="content">
+        <div id="dashboard" class="tab-content">
+            <h2>📊 Umumiy Statistika</h2>
+            <div class="stats-grid" id="statsGrid">
+                <div class="loading">📊 Statistika yuklanmoqda...</div>
+            </div>
+        </div>
+
+        <div id="users" class="tab-content" style="display:none;">
+            <h2>👥 Ro'yxatdan O'tgan Foydalanuvchilar</h2>
+            <div id="usersList" class="loading">👥 Foydalanuvchilar yuklanmoqda...</div>
+        </div>
+
+        <div id="tests" class="tab-content" style="display:none;">
+            <h2>📝 Yaratilgan Testlar</h2>
+            <div id="testsList" class="loading">📝 Testlar yuklanmoqda...</div>
+        </div>
+
+        <div id="students" class="tab-content" style="display:none;">
+            <h2>🎓 Test Topshirgan O'quvchilar</h2>
+            <div id="studentsList" class="loading">🎓 O'quvchilar yuklanmoqda...</div>
+        </div>
+
+        <div id="results" class="tab-content" style="display:none;">
+            <h2>📈 Test Natijalari</h2>
+            <div id="resultsList" class="loading">📈 Natijalar yuklanmoqda...</div>
+        </div>
+    </div>
+
+    <button class="refresh-btn" onclick="loadAllData()">🔄</button>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Supabase konfiguratsiyasi
+        const SUPABASE_URL = 'https://jwkgrkvornagxauwrduq.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3a2dya3Zvcm5hZ3hhdXdyZHVxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQwOTM4NDcsImV4cCI6MjA2OTY2OTg0N30.LOF8n-jJKzm9DcTTWu4QYrqWf7x7zLd3m29BlP8-n1I';
+
+        // Supabase client yaratish
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // URL parametrlaridan user_id olish
+        function getUserIdFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('user_id') || 'Unknown';
+        }
+
+        // User ID ni ko'rsatish
+        function displayUserId() {
+            const userId = getUserIdFromUrl();
+            document.getElementById('userIdDisplay').textContent = `ID: ${userId}`;
+        }
+
+        // Tab almashtirish
+        function showTab(tabName) {
+            // Barcha tab-contentlarni yashirish
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+
+            // Barcha tablardan active classni olib tashlash
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Kerakli tabni ko'rsatish
+            document.getElementById(tabName).style.display = 'block';
+            event.target.classList.add('active');
+        }
+
+        // Dashboard statistikasini yuklash
+        async function loadDashboard() {
+            try {
+                const [usersCount, testsCount, studentsCount, adminsCount] = await Promise.all([
+                    supabase.from('users').select('id', { count: 'exact' }),
+                    supabase.from('tests').select('id', { count: 'exact' }),
+                    supabase.from('students').select('id', { count: 'exact' }),
+                    supabase.from('admins').select('id', { count: 'exact' })
+                ]);
+
+                const html = `
+                    <div class="stat-card">
+                        <div class="stat-number">${usersCount.count || 0}</div>
+                        <div class="stat-label">👥 Foydalanuvchilar</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${adminsCount.count || 0}</div>
+                        <div class="stat-label">👨‍💼 Adminlar</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${testsCount.count || 0}</div>
+                        <div class="stat-label">📝 Testlar</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${studentsCount.count || 0}</div>
+                        <div class="stat-label">🎓 O'quvchilar</div>
+                    </div>
+                `;
+
+                document.getElementById('statsGrid').innerHTML = html;
+            } catch (error) {
+                console.error('Dashboard yuklanmadi:', error);
+                document.getElementById('statsGrid').innerHTML = '<div class="error">❌ Statistika yuklanmadi</div>';
+            }
+        }
+
+        // Foydalanuvchilarni yuklash
+        async function loadUsers() {
+            try {
+                const { data: users, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                if (!users || users.length === 0) {
+                    document.getElementById('usersList').innerHTML = '<div class="card">📭 Hozircha foydalanuvchilar yo\'q</div>';
+                    return;
+                }
+
+                let html = '';
+                users.forEach(user => {
+                    html += `
+                        <div class="card">
+                            <h3>${user.full_name || (user.first_name + ' ' + (user.last_name || ''))}</h3>
+                            <p><strong>Telegram ID:</strong> ${user.telegram_id}</p>
+                            <p><strong>Username:</strong> @${user.username || 'Noma\'lum'}</p>
+                            <p><strong>Admin:</strong> ${user.is_admin ? '✅ Ha' : '❌ Yo\'q'}</p>
+                            <p><strong>Ro'yxatdan o'tgan:</strong> ${new Date(user.created_at).toLocaleDateString('uz-UZ')}</p>
+                            <p><strong>Oxirgi faollik:</strong> ${new Date(user.last_active).toLocaleDateString('uz-UZ')}</p>
+                        </div>
+                    `;
+                });
+
+                document.getElementById('usersList').innerHTML = html;
+            } catch (error) {
+                console.error('Foydalanuvchilar yuklanmadi:', error);
+                document.getElementById('usersList').innerHTML = '<div class="error">❌ Foydalanuvchilar yuklanmadi</div>';
+            }
+        }
+
+        // Testlarni yuklash
+        async function loadTests() {
+            try {
+                const { data: tests, error } = await supabase
+                    .from('tests')
+                    .select(`
+                        *,
+                        users!tests_admin_id_fkey(full_name, first_name, last_name)
+                    `)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                if (!tests || tests.length === 0) {
+                    document.getElementById('testsList').innerHTML = '<div class="card">📭 Hozircha testlar yo\'q</div>';
+                    return;
+                }
+
+                let html = '';
+                tests.forEach(test => {
+                    const adminName = test.users?.full_name ||
+                                   (test.users?.first_name + ' ' + (test.users?.last_name || '')) ||
+                                   'Noma\'lum';
+
+                    html += `
+                        <div class="test-item">
+                            <div>
+                                <div class="test-code">${test.code}</div>
+                                <div><strong>${test.title}</strong></div>
+                                <div>Admin: ${adminName}</div>
+                                <div>Ochiq: ${test.open_questions_count}, Yopiq: ${test.closed_questions_count}</div>
+                                <div>Yaratilgan: ${new Date(test.created_at).toLocaleDateString('uz-UZ')}</div>
+                            </div>
+                            <div class="test-status ${test.is_active ? 'status-active' : 'status-inactive'}">
+                                ${test.is_active ? 'Faol' : 'Nofaol'}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                document.getElementById('testsList').innerHTML = html;
+            } catch (error) {
+                console.error('Testlar yuklanmadi:', error);
+                document.getElementById('testsList').innerHTML = '<div class="error">❌ Testlar yuklanmadi</div>';
+            }
+        }
+
+        // O'quvchilarni yuklash
+        async function loadStudents() {
+            try {
+                const { data: students, error } = await supabase
+                    .from('students')
+                    .select(`
+                        *,
+                        tests(title)
+                    `)
+                    .order('started_at', { ascending: false });
+
+                if (error) throw error;
+
+                if (!students || students.length === 0) {
+                    document.getElementById('studentsList').innerHTML = '<div class="card">📭 Hozircha o\'quvchilar yo\'q</div>';
+                    return;
+                }
+
+                let html = '<div style="margin-bottom: 20px;"><strong>O\'quvchi nomi | Test kodi | Ball | Foiz</strong></div>';
+                students.forEach(student => {
+                    const scoreClass = student.percentage >= 80 ? 'score-high' :
+                                     student.percentage >= 60 ? 'score-medium' : 'score-low';
+
+                    html += `
+                        <div class="student-item">
+                            <div>
+                                <strong>${student.full_name}</strong>
+                                <div style="font-size: 0.9em; color: #666;">
+                                    Test: ${student.tests?.title || 'Noma\'lum'}
+                                </div>
+                            </div>
+                            <div>${student.test_code}</div>
+                            <div>${student.score}/${student.total_questions}</div>
+                            <div class="score ${scoreClass}">${student.percentage}%</div>
+                        </div>
+                    `;
+                });
+
+                document.getElementById('studentsList').innerHTML = html;
+            } catch (error) {
+                console.error('O\'quvchilar yuklanmadi:', error);
+                document.getElementById('studentsList').innerHTML = '<div class="error">❌ O\'quvchilar yuklanmadi</div>';
+            }
+        }
+
+        // Natijalarni yuklash
+        async function loadResults() {
+            try {
+                const { data: results, error } = await supabase
+                    .from('students')
+                    .select(`
+                        *,
+                        tests(title, code),
+                        student_answers(*)
+                    `)
+                    .not('completed_at', 'is', null)
+                    .order('completed_at', { ascending: false });
+
+                if (error) throw error;
+
+                if (!results || results.length === 0) {
+                    document.getElementById('resultsList').innerHTML = '<div class="card">📭 Hozircha natijalar yo\'q</div>';
+                    return;
+                }
+
+                let html = '';
+                results.forEach(result => {
+                    const scoreClass = result.percentage >= 80 ? 'score-high' :
+                                     result.percentage >= 60 ? 'score-medium' : 'score-low';
+
+                    html += `
+                        <div class="card">
+                            <h3>${result.full_name}</h3>
+                            <p><strong>Test:</strong> ${result.tests?.title} (${result.test_code})</p>
+                            <p><strong>Ball:</strong> ${result.score}/${result.total_questions}</p>
+                            <p><strong>Foiz:</strong> <span class="score ${scoreClass}">${result.percentage}%</span></p>
+                            <p><strong>Boshlangan:</strong> ${new Date(result.started_at).toLocaleDateString('uz-UZ')} ${new Date(result.started_at).toLocaleTimeString('uz-UZ')}</p>
+                            <p><strong>Tugatilgan:</strong> ${new Date(result.completed_at).toLocaleDateString('uz-UZ')} ${new Date(result.completed_at).toLocaleTimeString('uz-UZ')}</p>
+                        </div>
+                    `;
+                });
+
+                document.getElementById('resultsList').innerHTML = html;
+            } catch (error) {
+                console.error('Natijalar yuklanmadi:', error);
+                document.getElementById('resultsList').innerHTML = '<div class="error">❌ Natijalar yuklanmadi</div>';
+            }
+        }
+
+        // Barcha ma'lumotlarni yuklash
+        async function loadAllData() {
+            displayUserId();
+            await Promise.all([
+                loadDashboard(),
+                loadUsers(),
+                loadTests(),
+                loadStudents(),
+                loadResults()
+            ]);
+        }
+
+        // Sahifa yuklanganda
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAllData();
+            // Har 30 soniyada yangilash
+            setInterval(loadAllData, 30000);
+        });
+    </script>
+</body>
+</html>
