@@ -8,45 +8,46 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
-        <header class="header">
+        <div class="header">
             <h1 id="pageTitle">📊 Test Tizimi</h1>
             <div class="user-info" id="userInfo">Yuklanmoqda...</div>
             <p id="pageDescription">Test tizimiga xush kelibsiz</p>
-        </header>
+        </div>
 
         <!-- Student Login Section -->
-        <section id="studentLogin" class="section">
-            <div class="card">
-                <div class="welcome">
+        <div id="studentLogin" class="student-only">
+            <div class="content">
+                <div class="welcome-message">
                     <h2>🎓 Test Topshirish</h2>
                     <p>Test kodini va ma'lumotlaringizni kiriting</p>
                 </div>
 
-                <form class="form" onsubmit="startTest(event)">
+                <div class="test-entry-form">
                     <div class="form-group">
-                        <label for="testCode">Test Kodi:</label>
-                        <input type="text" id="testCode" required placeholder="TEST001" style="text-transform: uppercase;">
+                        <label for="testCodeInput" class="form-label">Test Kodi:</label>
+                        <input type="text" id="testCodeInput" class="form-input"
+                               placeholder="TEST001" style="text-transform: uppercase;">
                     </div>
 
                     <div class="form-group">
-                        <label for="studentName">Ism Familiyangiz:</label>
-                        <input type="text" id="studentName" required placeholder="Ismingiz va familiyangizni kiriting">
+                        <label for="studentName" class="form-label">Ism Familiyangiz:</label>
+                        <input type="text" id="studentName" class="form-input"
+                               placeholder="Ismingiz va familiyangizni kiriting">
                     </div>
 
-                    <button type="submit" class="btn btn-primary">
+                    <button onclick="startTest()" class="btn btn-success">
                         🚀 Testni Boshlash
                     </button>
-                </form>
+                </div>
             </div>
-        </section>
+        </div>
 
-        <!-- Test Interface -->
-        <section id="testInterface" class="section hidden">
-            <div class="card">
+        <!-- Test Interface for Students -->
+        <div id="testInterface" style="display: none;">
+            <div class="content">
                 <div class="test-header">
                     <h2 id="testTitle">📝 Test</h2>
-                    <div class="progress">
+                    <div class="test-progress">
                         <div class="progress-info">
                             <span id="currentQuestion">1</span> / <span id="totalQuestions">0</span>
                         </div>
@@ -56,90 +57,118 @@
                     </div>
                 </div>
 
-                <div class="question" id="questionContainer">
+                <div class="question-container" id="questionContainer">
                     <!-- Questions will be loaded here -->
                 </div>
 
-                <div class="navigation">
-                    <button id="prevBtn" onclick="previousQuestion()" class="btn btn-secondary hidden">⬅️ Oldingi</button>
-                    <button id="nextBtn" onclick="nextQuestion()" class="btn btn-primary">Keyingi ➡️</button>
-                    <button id="finishBtn" onclick="finishTest()" class="btn btn-success hidden">✅ Yakunlash</button>
+                <div class="test-navigation">
+                    <button id="prevBtn" onclick="previousQuestion()" class="btn" style="display: none;">⬅️ Oldingi</button>
+                    <button id="nextBtn" onclick="nextQuestion()" class="btn">Keyingi ➡️</button>
+                    <button id="finishBtn" onclick="finishTest()" class="btn btn-success" style="display: none;">✅ Testni Yakunlash</button>
                 </div>
             </div>
-        </section>
+        </div>
 
-        <!-- Admin Panel -->
-        <section id="adminPanel" class="section hidden">
+        <!-- Admin Tabs -->
+        <div id="adminTabs" class="admin-only">
             <div class="tabs">
                 <button class="tab active" onclick="showTab('dashboard')">📊 Dashboard</button>
-                <button class="tab" onclick="showTab('create')">➕ Test Yaratish</button>
-                <button class="tab" onclick="showTab('manage')">🔧 Boshqarish</button>
+                <button class="tab" onclick="showTab('admin')">👨‍💼 Test Yaratish</button>
+                <button class="tab" onclick="showTab('users')">👥 Foydalanuvchilar</button>
+                <button class="tab" onclick="showTab('tests')">📝 Testlar</button>
+                <button class="tab" onclick="showTab('students')">🎓 O'quvchilar</button>
+                <button class="tab" onclick="showTab('results')">📈 Natijalar</button>
             </div>
+        </div>
 
-            <div class="tab-content">
-                <div id="dashboard" class="tab-panel">
-                    <h2>📊 Statistika</h2>
-                    <div class="stats" id="statsGrid">
-                        <div class="loading">📊 Yuklanmoqda...</div>
+        <!-- Admin Content -->
+        <div id="adminContent" class="admin-only">
+            <div class="content">
+                <div id="dashboard" class="tab-content">
+                    <h2>📊 Umumiy Statistika</h2>
+                    <div class="stats-grid" id="statsGrid">
+                        <div class="loading">📊 Statistika yuklanmoqda...</div>
                     </div>
                 </div>
 
-                <div id="create" class="tab-panel hidden">
-                    <h2>➕ Yangi Test Yaratish</h2>
-                    <form class="form" onsubmit="createTest(event)">
+                <div id="admin" class="tab-content" style="display:none;">
+                    <h2>👨‍💼 Admin Panel - Test Yaratish</h2>
+
+                    <!-- Test Yaratish Formi -->
+                    <div class="card" id="createTestForm">
+                        <h3>➕ Yangi Test Yaratish</h3>
                         <div class="form-group">
-                            <label for="newTestCode">Test Kodi:</label>
-                            <input type="text" id="newTestCode" required placeholder="TEST001" style="text-transform: uppercase;">
+                            <label for="testCode" class="form-label">Test Kodi:</label>
+                            <input type="text" id="testCode" class="form-input" placeholder="Masalan: TEST001"
+                                   style="text-transform: uppercase;">
                         </div>
 
                         <div class="form-group">
-                            <label for="newTestTitle">Test Nomi:</label>
-                            <input type="text" id="newTestTitle" required placeholder="Test nomini kiriting">
+                            <label for="testTitle" class="form-label">Test Nomi:</label>
+                            <input type="text" id="testTitle" class="form-input" placeholder="Test nomini kiriting">
                         </div>
 
-                        <div class="form-row">
+                        <div class="form-grid">
                             <div class="form-group">
-                                <label for="openCount">Ochiq Savollar:</label>
-                                <input type="number" id="openCount" min="0" max="50" value="0">
+                                <label for="openCount" class="form-label">Ochiq Savollar:</label>
+                                <input type="number" id="openCount" class="form-input" min="0" max="50" value="0">
                             </div>
                             <div class="form-group">
-                                <label for="closedCount">Yopiq Savollar:</label>
-                                <input type="number" id="closedCount" min="0" max="50" value="0">
+                                <label for="closedCount" class="form-label">Yopiq Savollar:</label>
+                                <input type="number" id="closedCount" class="form-input" min="0" max="50" value="0">
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-primary">➕ Test Yaratish</button>
-                    </form>
+                        <button type="button" onclick="createTest()" class="btn">
+                            ➕ Test Yaratish
+                        </button>
+                    </div>
 
-                    <div id="answersSection" class="hidden">
+                    <!-- Javoblar Kiritish Qismi -->
+                    <div class="card" id="answersSection" style="display: none;">
                         <h3>📝 Javoblar Kiritish</h3>
                         <div id="answersContent"></div>
                     </div>
+
+                    <!-- Test Boshqaruv Qismi -->
+                    <div class="card">
+                        <h3>🔧 Test Boshqaruv</h3>
+                        <div class="form-grid">
+                            <button onclick="loadActiveTests()" class="btn">📝 Faol Testlar</button>
+                            <button onclick="loadInactiveTests()" class="btn">🚫 Nofaol Testlar</button>
+                            <button onclick="exportResults()" class="btn">📊 Natijalarni Export</button>
+                            <button onclick="clearOldData()" class="btn btn-danger">🗑️ Eski Ma'lumotlarni O'chirish</button>
+                        </div>
+                        <div id="testManagement" style="margin-top: 20px;"></div>
+                    </div>
                 </div>
 
-                <div id="manage" class="tab-panel hidden">
-                    <h2>🔧 Test Boshqaruv</h2>
-                    <div class="actions">
-                        <button onclick="loadTests()" class="btn btn-secondary">📝 Testlarni Ko'rish</button>
-                        <button onclick="loadStudents()" class="btn btn-secondary">🎓 O'quvchilar</button>
-                        <button onclick="exportResults()" class="btn btn-secondary">📊 Export</button>
-                    </div>
-                    <div id="managementContent"></div>
+                <div id="users" class="tab-content" style="display:none;">
+                    <h2>👥 Ro'yxatdan O'tgan Foydalanuvchilar</h2>
+                    <div id="usersList" class="loading">👥 Foydalanuvchilar yuklanmoqda...</div>
+                </div>
+
+                <div id="tests" class="tab-content" style="display:none;">
+                    <h2>📝 Yaratilgan Testlar</h2>
+                    <div id="testsList" class="loading">📝 Testlar yuklanmoqda...</div>
+                </div>
+
+                <div id="students" class="tab-content" style="display:none;">
+                    <h2>🎓 Test Topshirgan O'quvchilar</h2>
+                    <div id="studentsList" class="loading">🎓 O'quvchilar yuklanmoqda...</div>
+                </div>
+
+                <div id="results" class="tab-content" style="display:none;">
+                    <h2>📈 Test Natijalari</h2>
+                    <div id="resultsList" class="loading">📈 Natijalar yuklanmoqda...</div>
                 </div>
             </div>
-        </section>
+        </div>
     </div>
 
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="overlay hidden">
-        <div class="spinner"></div>
-        <p>Yuklanmoqda...</p>
-    </div>
+    <button class="refresh-btn" onclick="loadAllData()">🔄</button>
 
-    <!-- Success/Error Messages -->
-    <div id="messageContainer"></div>
-
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="script.js"></script>
 </body>
 </html>
-
