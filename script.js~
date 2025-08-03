@@ -164,13 +164,6 @@ async function loadTestQuestions() {
         currentQuestionIndex = 0;
         studentAnswers = {};
 
-        // Agar savollar yo'q bo'lsa
-        if (testQuestions.length === 0) {
-            alert('❌ Bu testda savollar mavjud emas!');
-            location.reload();
-            return;
-        }
-
     } catch (error) {
         console.error('Test savollarini yuklashda xatolik:', error);
         alert('❌ Test savollarini yuklashda xatolik yuz berdi!');
@@ -188,7 +181,6 @@ function showTestInterface() {
     document.getElementById('totalQuestions').textContent = testQuestions.length;
 
     showCurrentQuestion();
-    addAutoSaveListeners(); // Auto-save qo'shish
 }
 
 // Hozirgi savolni ko'rsatish
@@ -276,16 +268,10 @@ function selectClosedAnswer(option) {
     });
 
     // Tanlangan optionga selected class qo'shish
-    const selectedOption = document.querySelector(`[onclick="selectClosedAnswer('${option}')"]`);
-    if (selectedOption) {
-        selectedOption.classList.add('selected');
-    }
+    event.currentTarget.classList.add('selected');
 
     // Radio buttonni belgilash
-    const radioButton = document.querySelector(`input[value="${option}"]`);
-    if (radioButton) {
-        radioButton.checked = true;
-    }
+    document.querySelector(`input[value="${option}"]`).checked = true;
 }
 
 // Keyingi savolga o'tish
@@ -314,14 +300,15 @@ async function finishTest() {
         // Javoblarni bazaga saqlash
         const answersToSave = [];
         for (let i = 0; i < testQuestions.length; i++) {
-            const studentAnswer = studentAnswers[i] || '';
-            answersToSave.push({
-                student_id: currentStudent.id,
-                question_number: testQuestions[i].question_number,
-                question_type: testQuestions[i].question_type,
-                student_answer: studentAnswer,
-                is_correct: studentAnswer.toString().toLowerCase() === testQuestions[i].correct_answer.toString().toLowerCase()
-            });
+            if (studentAnswers[i]) {
+                answersToSave.push({
+                    student_id: currentStudent.id,
+                    question_number: testQuestions[i].question_number,
+                    question_type: testQuestions[i].question_type,
+                    student_answer: studentAnswers[i],
+                    is_correct: studentAnswers[i] === testQuestions[i].correct_answer
+                });
+            }
         }
 
         if (answersToSave.length > 0) {
@@ -564,50 +551,47 @@ function showAnswersSection(testId, openCount, closedCount) {
 
     let html = '<div id="answersProgress"></div>';
 
-    // Barcha savollarni bitta ro'yxatda ko'rsatish
-    html += '<div class="answers-grid">';
-
-    // Ochiq savollar
+    // Ochiq savollar uchun
     if (openCount > 0) {
-        html += '<div class="answers-section"><h4>📖 Ochiq Savollar Javoblari</h4>';
+        html += '<h4>📖 Ochiq Savollar Javoblari</h4>';
         for (let i = 1; i <= openCount; i++) {
             html += `
-                <div class="answer-row">
-                    <div class="question-number">${i} a)</div>
-                    <input type="text" id="openAnswer${i}" class="answer-field"
-                           placeholder="Javobni kiriting"
-                           onchange="saveAnswerInstant(${testId}, ${i}, 'open')" />
+                <div class="question-input" id="open-${i}">
+                    <label class="form-label">${i}-savol to'g'ri javobi:</label>
+                    <input type="text" id="openAnswer${i}" class="form-input"
+                           placeholder="To'g'ri javobni kiriting" />
+                    <button onclick="saveAnswer(${testId}, ${i}, 'open')" class="btn" style="margin-top: 10px;">
+                        💾 Saqlash
+                    </button>
                 </div>
             `;
         }
-        html += '</div>';
     }
 
-    // Yopiq savollar
+    // Yopiq savollar uchun
     if (closedCount > 0) {
-        html += '<div class="answers-section"><h4>📋 Yopiq Savollar Javoblari</h4>';
+        html += '<h4>📋 Yopiq Savollar Javoblari</h4>';
         for (let i = 1; i <= closedCount; i++) {
             html += `
-                <div class="answer-row">
-                    <div class="question-number">${openCount + i} a)</div>
-                    <select id="closedAnswer${i}" class="answer-field"
-                            onchange="saveAnswerInstant(${testId}, ${i}, 'closed')">
+                <div class="question-input" id="closed-${i}">
+                    <label class="form-label">${i}-savol to'g'ri javobi:</label>
+                    <select id="closedAnswer${i}" class="form-input">
                         <option value="">Javobni tanlang</option>
                         <option value="A">A</option>
                         <option value="B">B</option>
                         <option value="C">C</option>
                         <option value="D">D</option>
                     </select>
+                    <button onclick="saveAnswer(${testId}, ${i}, 'closed')" class="btn" style="margin-top: 10px;">
+                        💾 Saqlash
+                    </button>
                 </div>
             `;
         }
-        html += '</div>';
     }
 
-    html += '</div>'; // answers-grid tugashi
-
     html += `
-        <div class="finish-section">
+        <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
             <h4>📊 Yakunlash</h4>
             <p>Barcha javoblarni kiritgandan keyin testni faollashtiring:</p>
             <button onclick="finishTestCreation(${testId})" class="btn btn-success">
@@ -618,45 +602,6 @@ function showAnswersSection(testId, openCount, closedCount) {
 
     document.getElementById('answersContent').innerHTML = html;
     updateProgress(testId);
-}
-
-// Javobni darhol saqlash (onChange event bilan)
-async function saveAnswerInstant(testId, questionNumber, questionType) {
-    const inputId = questionType === 'open' ? `openAnswer${questionNumber}` : `closedAnswer${questionNumber}`;
-    const answer = document.getElementById(inputId).value.trim();
-
-    if (!answer) return;
-
-    if (questionType === 'closed' && !['A', 'B', 'C', 'D'].includes(answer)) {
-        return;
-    }
-
-    try {
-        const { error } = await supabase
-            .from('test_answers')
-            .upsert([{
-                test_id: testId,
-                question_number: questionNumber,
-                question_type: questionType,
-                correct_answer: answer
-            }]);
-
-        if (error) throw error;
-
-        // Muvaffaqiyat belgisi
-        const inputElement = document.getElementById(inputId);
-        inputElement.style.borderColor = '#28a745';
-        inputElement.style.backgroundColor = '#d4edda';
-
-        // Progressni yangilash
-        await updateProgress(testId);
-
-    } catch (error) {
-        console.error('Javobni saqlashda xatolik:', error);
-        const inputElement = document.getElementById(inputId);
-        inputElement.style.borderColor = '#dc3545';
-        inputElement.style.backgroundColor = '#f8d7da';
-    }
 }
 
 // Javobni saqlash
@@ -1340,83 +1285,8 @@ function autoSaveAnswer() {
 
 // Add auto-save event listeners when test interface is shown
 function addAutoSaveListeners() {
-    // Timeout orqali DOM elementini kutish
-    setTimeout(() => {
-        const answerInput = document.getElementById('currentAnswer');
-        if (answerInput) {
-            answerInput.addEventListener('input', autoSaveAnswer);
-        }
-    }, 100);
-}
-
-// Hozirgi savolni ko'rsatganda ham auto-save qo'shish
-function showCurrentQuestion() {
-    if (currentQuestionIndex >= testQuestions.length) {
-        finishTest();
-        return;
+    const answerInput = document.getElementById('currentAnswer');
+    if (answerInput) {
+        answerInput.addEventListener('input', autoSaveAnswer);
     }
-
-    const question = testQuestions[currentQuestionIndex];
-    const questionContainer = document.getElementById('questionContainer');
-
-    // Progress yangilash
-    document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
-    const progressPercent = ((currentQuestionIndex + 1) / testQuestions.length) * 100;
-    document.getElementById('progressFill').style.width = progressPercent + '%';
-
-    // Savol ko'rsatish
-    let questionHtml = `
-        <div class="question-title">
-            ${question.question_type === 'open' ? '📖 Ochiq' : '📋 Yopiq'} Savol ${currentQuestionIndex + 1}
-        </div>
-        <div class="question-text">
-            Savolga javob bering:
-        </div>
-    `;
-
-    if (question.question_type === 'open') {
-        questionHtml += `
-            <textarea
-                id="currentAnswer"
-                class="answer-input"
-                placeholder="Javobingizni bu yerga yozing..."
-                oninput="saveCurrentAnswer()"
-            >${studentAnswers[currentQuestionIndex] || ''}</textarea>
-        `;
-    } else {
-        questionHtml += `
-            <div class="answer-options">
-                <div class="answer-option ${studentAnswers[currentQuestionIndex] === 'A' ? 'selected' : ''}"
-                     onclick="selectClosedAnswer('A')">
-                    <input type="radio" name="answer" value="A" ${studentAnswers[currentQuestionIndex] === 'A' ? 'checked' : ''}>
-                    <span>A) Variant A</span>
-                </div>
-                <div class="answer-option ${studentAnswers[currentQuestionIndex] === 'B' ? 'selected' : ''}"
-                     onclick="selectClosedAnswer('B')">
-                    <input type="radio" name="answer" value="B" ${studentAnswers[currentQuestionIndex] === 'B' ? 'checked' : ''}>
-                    <span>B) Variant B</span>
-                </div>
-                <div class="answer-option ${studentAnswers[currentQuestionIndex] === 'C' ? 'selected' : ''}"
-                     onclick="selectClosedAnswer('C')">
-                    <input type="radio" name="answer" value="C" ${studentAnswers[currentQuestionIndex] === 'C' ? 'checked' : ''}>
-                    <span>C) Variant C</span>
-                </div>
-                <div class="answer-option ${studentAnswers[currentQuestionIndex] === 'D' ? 'selected' : ''}"
-                     onclick="selectClosedAnswer('D')">
-                    <input type="radio" name="answer" value="D" ${studentAnswers[currentQuestionIndex] === 'D' ? 'checked' : ''}>
-                    <span>D) Variant D</span>
-                </div>
-            </div>
-        `;
-    }
-
-    questionContainer.innerHTML = questionHtml;
-
-    // Navigation tugmalar
-    document.getElementById('prevBtn').style.display = currentQuestionIndex > 0 ? 'block' : 'none';
-    document.getElementById('nextBtn').style.display = currentQuestionIndex < testQuestions.length - 1 ? 'block' : 'none';
-    document.getElementById('finishBtn').style.display = currentQuestionIndex === testQuestions.length - 1 ? 'block' : 'none';
-
-    // Auto-save listener qo'shish
-    addAutoSaveListeners();
 }

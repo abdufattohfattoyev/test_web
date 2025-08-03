@@ -444,178 +444,23 @@ body {
     display: none;
 }
 
-/* Answer Input Styles - Yangi uslublar */
-.answers-grid {
-    display: grid;
-    gap: 30px;
-    margin: 20px 0;
-}
-
-.answers-section {
+/* Question Input Styles */
+.question-input {
     background: #f8f9fa;
-    border-radius: 15px;
-    padding: 25px;
-    border-left: 5px solid #667eea;
-}
-
-.answers-section h4 {
-    color: #333;
-    margin-bottom: 20px;
-    font-size: 1.3em;
-    text-align: center;
-}
-
-.answer-row {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 15px;
-    padding: 10px;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    transition: all 0.3s ease;
-}
-
-.answer-row:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-}
-
-.question-number {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    padding: 8px 15px;
-    border-radius: 8px;
-    font-weight: bold;
-    font-size: 1.1em;
-    min-width: 60px;
-    text-align: center;
-    flex-shrink: 0;
-}
-
-.answer-field {
-    flex: 1;
-    padding: 12px 15px;
     border: 2px solid #e9ecef;
     border-radius: 8px;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-    background: #fff;
+    padding: 15px;
+    margin-bottom: 15px;
 }
 
-.answer-field:focus {
-    outline: none;
+.question-input.current {
     border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    background: #f0f2ff;
 }
 
-.answer-field:valid {
+.question-input.completed {
     border-color: #28a745;
-    background-color: #f8fff9;
-}
-
-.finish-section {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    padding: 25px;
-    border-radius: 15px;
-    text-align: center;
-    margin-top: 30px;
-}
-
-.finish-section h4 {
-    margin-bottom: 15px;
-    font-size: 1.4em;
-}
-
-.finish-section p {
-    margin-bottom: 20px;
-    opacity: 0.9;
-}
-
-.finish-section .btn {
-    background: white;
-    color: #667eea;
-    border: none;
-    padding: 15px 30px;
-    font-weight: bold;
-    font-size: 1.1em;
-}
-
-.finish-section .btn:hover {
-    background: #f8f9fa;
-    transform: translateY(-2px);
-}
-
-/* Progress Bar Styles */
-#answersProgress {
-    background: white;
-    padding: 20px;
-    border-radius: 15px;
-    margin-bottom: 25px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-#answersProgress h4 {
-    color: #333;
-    margin-bottom: 15px;
-    text-align: center;
-}
-
-#answersProgress p {
-    text-align: center;
-    font-weight: bold;
-    color: #667eea;
-    margin-top: 10px;
-}
-
-/* Mobile Responsive */
-@media (max-width: 768px) {
-    .answer-row {
-        flex-direction: column;
-        gap: 10px;
-        text-align: center;
-    }
-
-    .question-number {
-        min-width: auto;
-        width: 100%;
-        max-width: 120px;
-        margin: 0 auto;
-    }
-
-    .answer-field {
-        width: 100%;
-    }
-
-    .answers-section {
-        padding: 15px;
-    }
-
-    .finish-section {
-        padding: 20px 15px;
-    }
-}
-
-@media (max-width: 480px) {
-    .answers-grid {
-        gap: 20px;
-    }
-
-    .answers-section h4 {
-        font-size: 1.1em;
-    }
-
-    .question-number {
-        font-size: 1em;
-        padding: 6px 12px;
-    }
-
-    .answer-field {
-        padding: 10px 12px;
-        font-size: 0.9rem;
-    }
+    background: #d4edda;
 }
 
 /* Test Action Buttons */
