@@ -42,6 +42,33 @@
             </div>
         </div>
 
+        <!-- Test Interface for Students -->
+        <div id="testInterface" style="display: none;">
+            <div class="content">
+                <div class="test-header">
+                    <h2 id="testTitle">📝 Test</h2>
+                    <div class="test-progress">
+                        <div class="progress-info">
+                            <span id="currentQuestion">1</span> / <span id="totalQuestions">0</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="question-container" id="questionContainer">
+                    <!-- Questions will be loaded here -->
+                </div>
+
+                <div class="test-navigation">
+                    <button id="prevBtn" onclick="previousQuestion()" class="btn" style="display: none;">⬅️ Oldingi</button>
+                    <button id="nextBtn" onclick="nextQuestion()" class="btn">Keyingi ➡️</button>
+                    <button id="finishBtn" onclick="finishTest()" class="btn btn-success" style="display: none;">✅ Testni Yakunlash</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Admin Tabs -->
         <div id="adminTabs" class="admin-only">
             <div class="tabs">

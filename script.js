@@ -7,11 +7,6 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUser = null;
 let isAdmin = false;
-let currentTest = null;
-let currentStudent = null;
-let testQuestions = [];
-let currentQuestionIndex = 0;
-let studentAnswers = {};
 
 // URL parametrlaridan user_id olish
 function getUserIdFromUrl() {
@@ -62,7 +57,6 @@ function showAdminInterface() {
     document.getElementById('adminTabs').style.display = 'block';
     document.getElementById('adminContent').style.display = 'block';
     document.getElementById('studentLogin').style.display = 'none';
-    document.getElementById('testInterface').style.display = 'none';
 
     document.getElementById('pageTitle').textContent = '📊 Test Tizimi - Admin Panel';
     document.getElementById('userInfo').textContent = `Admin: ${currentUser.full_name || currentUser.first_name}`;
@@ -76,7 +70,6 @@ function showStudentInterface() {
     document.getElementById('adminTabs').style.display = 'none';
     document.getElementById('adminContent').style.display = 'none';
     document.getElementById('studentLogin').style.display = 'block';
-    document.getElementById('testInterface').style.display = 'none';
 
     document.getElementById('pageTitle').textContent = '🎓 Test Tizimi';
     document.getElementById('userInfo').textContent = currentUser ?
@@ -114,8 +107,6 @@ async function startTest() {
             return;
         }
 
-        currentTest = test;
-
         // Studentni ro'yxatga olish
         const { data: student, error: studentError } = await supabase
             .from('students')
@@ -123,8 +114,7 @@ async function startTest() {
                 telegram_id: currentUser?.telegram_id || null,
                 full_name: studentName,
                 test_code: testCode,
-                total_questions: test.open_questions_count + test.closed_questions_count,
-                started_at: new Date().toISOString()
+                total_questions: test.open_questions_count + test.closed_questions_count
             }])
             .select()
             .single();
@@ -135,13 +125,8 @@ async function startTest() {
             return;
         }
 
-        currentStudent = student;
-
-        // Test javoblarini yuklash
-        await loadTestQuestions();
-
-        // Test interfeysi ko'rsatish
-        showTestInterface();
+        // Test sahifasiga yo'naltirish
+        showTestInterface(test, student);
 
     } catch (error) {
         console.error('Test boshlashda xatolik:', error);
@@ -149,255 +134,149 @@ async function startTest() {
     }
 }
 
-// Test savollarini yuklash
-async function loadTestQuestions() {
-    try {
-        const { data: answers, error } = await supabase
-            .from('test_answers')
-            .select('*')
-            .eq('test_id', currentTest.id)
-            .order('question_number');
+// Test interfeysini ko'rsatish
+function showTestInterface(test, student) {
+    document.getElementById('studentLogin').innerHTML = `
+        <div class="content">
+            <div class="welcome-message">
+                <h2>📝 ${test.title}</h2>
+                <p>Test kodi: ${test.code} | Savollar: ${test.open_questions_count + test.closed_questions_count}</p>
+                <p>Ishtirokchi: ${student.full_name}</p>
+            </div>
 
-        if (error) throw error;
+            <div id="testQuestions">
+                <div class="loading">Test yuklanmoqda...</div>
+            </div>
 
-        testQuestions = answers || [];
-        currentQuestionIndex = 0;
-        studentAnswers = {};
+            <div id="testProgress" style="margin-top: 20px;"></div>
 
-        // Agar savollar yo'q bo'lsa
-        if (testQuestions.length === 0) {
-            alert('❌ Bu testda savollar mavjud emas!');
-            location.reload();
-            return;
-        }
-
-    } catch (error) {
-        console.error('Test savollarini yuklashda xatolik:', error);
-        alert('❌ Test savollarini yuklashda xatolik yuz berdi!');
-    }
-}
-
-// Test interfeysi ko'rsatish
-function showTestInterface() {
-    document.getElementById('studentLogin').style.display = 'none';
-    document.getElementById('testInterface').style.display = 'block';
-    document.getElementById('adminTabs').style.display = 'none';
-    document.getElementById('adminContent').style.display = 'none';
-
-    document.getElementById('testTitle').textContent = `📝 ${currentTest.title}`;
-    document.getElementById('totalQuestions').textContent = testQuestions.length;
-
-    showCurrentQuestion();
-    addAutoSaveListeners(); // Auto-save qo'shish
-}
-
-// Hozirgi savolni ko'rsatish
-function showCurrentQuestion() {
-    if (currentQuestionIndex >= testQuestions.length) {
-        finishTest();
-        return;
-    }
-
-    const question = testQuestions[currentQuestionIndex];
-    const questionContainer = document.getElementById('questionContainer');
-
-    // Progress yangilash
-    document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
-    const progressPercent = ((currentQuestionIndex + 1) / testQuestions.length) * 100;
-    document.getElementById('progressFill').style.width = progressPercent + '%';
-
-    // Savol ko'rsatish
-    let questionHtml = `
-        <div class="question-title">
-            ${question.question_type === 'open' ? '📖 Ochiq' : '📋 Yopiq'} Savol ${currentQuestionIndex + 1}
-        </div>
-        <div class="question-text">
-            Savolga javob bering:
+            <div style="text-align: center; margin-top: 20px;">
+                <button onclick="submitTest()" class="btn btn-success">✅ Testni Yakunlash</button>
+            </div>
         </div>
     `;
 
-    if (question.question_type === 'open') {
-        questionHtml += `
-            <textarea
-                id="currentAnswer"
-                class="answer-input"
-                placeholder="Javobingizni bu yerga yozing..."
-                onchange="saveCurrentAnswer()"
-            >${studentAnswers[currentQuestionIndex] || ''}</textarea>
-        `;
-    } else {
-        questionHtml += `
-            <div class="answer-options">
-                <div class="answer-option ${studentAnswers[currentQuestionIndex] === 'A' ? 'selected' : ''}"
-                     onclick="selectClosedAnswer('A')">
-                    <input type="radio" name="answer" value="A" ${studentAnswers[currentQuestionIndex] === 'A' ? 'checked' : ''}>
-                    <span>A) Variant A</span>
-                </div>
-                <div class="answer-option ${studentAnswers[currentQuestionIndex] === 'B' ? 'selected' : ''}"
-                     onclick="selectClosedAnswer('B')">
-                    <input type="radio" name="answer" value="B" ${studentAnswers[currentQuestionIndex] === 'B' ? 'checked' : ''}>
-                    <span>B) Variant B</span>
-                </div>
-                <div class="answer-option ${studentAnswers[currentQuestionIndex] === 'C' ? 'selected' : ''}"
-                     onclick="selectClosedAnswer('C')">
-                    <input type="radio" name="answer" value="C" ${studentAnswers[currentQuestionIndex] === 'C' ? 'checked' : ''}>
-                    <span>C) Variant C</span>
-                </div>
-                <div class="answer-option ${studentAnswers[currentQuestionIndex] === 'D' ? 'selected' : ''}"
-                     onclick="selectClosedAnswer('D')">
-                    <input type="radio" name="answer" value="D" ${studentAnswers[currentQuestionIndex] === 'D' ? 'checked' : ''}>
-                    <span>D) Variant D</span>
-                </div>
-            </div>
-        `;
-    }
-
-    questionContainer.innerHTML = questionHtml;
-
-    // Navigation tugmalar
-    document.getElementById('prevBtn').style.display = currentQuestionIndex > 0 ? 'block' : 'none';
-    document.getElementById('nextBtn').style.display = currentQuestionIndex < testQuestions.length - 1 ? 'block' : 'none';
-    document.getElementById('finishBtn').style.display = currentQuestionIndex === testQuestions.length - 1 ? 'block' : 'none';
+    loadTestQuestions(test, student);
 }
 
-// Hozirgi javobni saqlash (ochiq savollar uchun)
-function saveCurrentAnswer() {
-    const answer = document.getElementById('currentAnswer').value.trim();
-    studentAnswers[currentQuestionIndex] = answer;
-}
+// Test savollarini yuklash
+async function loadTestQuestions(test, student) {
+    try {
+        // Test javoblarini olish
+        const { data: answers, error: answersError } = await supabase
+            .from('test_answers')
+            .select('*')
+            .eq('test_id', test.id);
 
-// Yopiq javobni tanlash
-function selectClosedAnswer(option) {
-    studentAnswers[currentQuestionIndex] = option;
+        if (answersError) throw answersError;
 
-    // Barcha optionlardan selected classni olib tashlash
-    document.querySelectorAll('.answer-option').forEach(opt => {
-        opt.classList.remove('selected');
-    });
+        // Savollar interfeysini yaratish
+        let html = '';
+        let questionNumber = 1;
 
-    // Tanlangan optionga selected class qo'shish
-    const selectedOption = document.querySelector(`[onclick="selectClosedAnswer('${option}')"]`);
-    if (selectedOption) {
-        selectedOption.classList.add('selected');
-    }
+        // Ochiq savollar
+        for (let i = 1; i <= test.open_questions_count; i++) {
+            html += `
+                <div class="question-input ${questionNumber === 1 ? 'current' : ''}" id="question-${questionNumber}">
+                    <h3>${questionNumber}-savol (Ochiq)</h3>
+                    <p>Savol matni bu yerda bo'lishi kerak...</p>
+                    <div class="form-group">
+                        <label for="answer-${questionNumber}" class="form-label">Javobingiz:</label>
+                        <textarea id="answer-${questionNumber}" class="form-input" rows="3" placeholder="Javobingizni yozing..."></textarea>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        ${questionNumber > 1 ? `<button onclick="prevQuestion(${questionNumber})" class="btn">⬅️ Oldingi</button>` : '<div></div>'}
+                        ${questionNumber < (test.open_questions_count + test.closed_questions_count) ? `<button onclick="nextQuestion(${questionNumber})" class="btn">Keyingi ➡️</button>` : ''}
+                    </div>
+                </div>
+            `;
+            questionNumber++;
+        }
 
-    // Radio buttonni belgilash
-    const radioButton = document.querySelector(`input[value="${option}"]`);
-    if (radioButton) {
-        radioButton.checked = true;
+        // Yopiq savollar
+        for (let i = 1; i <= test.closed_questions_count; i++) {
+            html += `
+                <div class="question-input" id="question-${questionNumber}" style="display: none;">
+                    <h3>${questionNumber}-savol (Yopiq)</h3>
+                    <p>Savol matni bu yerda bo'lishi kerak...</p>
+                    <div class="form-group">
+                        <label class="form-label">Javobingiz:</label>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                            <button onclick="selectAnswer(${questionNumber}, 'A')" class="btn" id="option-${questionNumber}-A">A) Variant A</button>
+                            <button onclick="selectAnswer(${questionNumber}, 'B')" class="btn" id="option-${questionNumber}-B">B) Variant B</button>
+                            <button onclick="selectAnswer(${questionNumber}, 'C')" class="btn" id="option-${questionNumber}-C">C) Variant C</button>
+                            <button onclick="selectAnswer(${questionNumber}, 'D')" class="btn" id="option-${questionNumber}-D">D) Variant D</button>
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        ${questionNumber > 1 ? `<button onclick="prevQuestion(${questionNumber})" class="btn">⬅️ Oldingi</button>` : '<div></div>'}
+                        ${questionNumber < (test.open_questions_count + test.closed_questions_count) ? `<button onclick="nextQuestion(${questionNumber})" class="btn">Keyingi ➡️</button>` : ''}
+                    </div>
+                </div>
+            `;
+            questionNumber++;
+        }
+
+        document.getElementById('testQuestions').innerHTML = html;
+
+        // Progress bar yaratish
+        updateTestProgress(1, test.open_questions_count + test.closed_questions_count);
+
+    } catch (error) {
+        console.error('Savollarni yuklashda xatolik:', error);
+        document.getElementById('testQuestions').innerHTML = '<div class="error">❌ Savollarni yuklashda xatolik yuz berdi</div>';
     }
 }
 
 // Keyingi savolga o'tish
-function nextQuestion() {
-    if (currentQuestionIndex < testQuestions.length - 1) {
-        currentQuestionIndex++;
-        showCurrentQuestion();
-    }
+function nextQuestion(currentQuestion) {
+    document.getElementById(`question-${currentQuestion}`).style.display = 'none';
+    document.getElementById(`question-${currentQuestion + 1}`).style.display = 'block';
+    updateTestProgress(currentQuestion + 1);
 }
 
 // Oldingi savolga qaytish
-function previousQuestion() {
-    if (currentQuestionIndex > 0) {
-        currentQuestionIndex--;
-        showCurrentQuestion();
-    }
+function prevQuestion(currentQuestion) {
+    document.getElementById(`question-${currentQuestion}`).style.display = 'none';
+    document.getElementById(`question-${currentQuestion - 1}`).style.display = 'block';
+    updateTestProgress(currentQuestion - 1);
+}
+
+// Test progressini yangilash
+function updateTestProgress(currentQuestion, totalQuestions) {
+    const progress = (currentQuestion / totalQuestions) * 100;
+    document.getElementById('testProgress').innerHTML = `
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: ${progress}%"></div>
+        </div>
+        <p>${currentQuestion}/${totalQuestions} savol</p>
+    `;
+}
+
+// Yopiq savol uchun javob tanlash
+function selectAnswer(questionNumber, option) {
+    // Barcha variantlardan tanlangan classni olib tashlash
+    ['A', 'B', 'C', 'D'].forEach(opt => {
+        const btn = document.getElementById(`option-${questionNumber}-${opt}`);
+        btn.classList.remove('btn-success');
+        btn.style.background = '';
+    });
+
+    // Tanlangan variantga belgi qo'yish
+    const selectedBtn = document.getElementById(`option-${questionNumber}-${option}`);
+    selectedBtn.classList.add('btn-success');
+    selectedBtn.style.background = '#28a745';
 }
 
 // Testni yakunlash
-async function finishTest() {
-    if (!confirm('Testni yakunlashni tasdiqlaysizmi? Bu amal qaytarib bo\'lmaydi!')) {
+async function submitTest() {
+    if (!confirm('Testni yakunlashni tasdiqlaysizmi? Keyin o\'zgartirish imkoni bo\'lmaydi!')) {
         return;
     }
 
-    try {
-        // Javoblarni bazaga saqlash
-        const answersToSave = [];
-        for (let i = 0; i < testQuestions.length; i++) {
-            const studentAnswer = studentAnswers[i] || '';
-            answersToSave.push({
-                student_id: currentStudent.id,
-                question_number: testQuestions[i].question_number,
-                question_type: testQuestions[i].question_type,
-                student_answer: studentAnswer,
-                is_correct: studentAnswer.toString().toLowerCase() === testQuestions[i].correct_answer.toString().toLowerCase()
-            });
-        }
-
-        if (answersToSave.length > 0) {
-            const { error: saveError } = await supabase
-                .from('student_answers')
-                .insert(answersToSave);
-
-            if (saveError) throw saveError;
-        }
-
-        // Natijalarni hisoblash
-        const correctAnswers = answersToSave.filter(answer => answer.is_correct).length;
-        const totalQuestions = testQuestions.length;
-        const percentage = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
-
-        // Studentni yangilash
-        const { error: updateError } = await supabase
-            .from('students')
-            .update({
-                score: correctAnswers,
-                percentage: percentage,
-                completed_at: new Date().toISOString()
-            })
-            .eq('id', currentStudent.id);
-
-        if (updateError) throw updateError;
-
-        // Natijalar sahifasini ko'rsatish
-        showTestResults(correctAnswers, totalQuestions, percentage);
-
-    } catch (error) {
-        console.error('Testni yakunlashda xatolik:', error);
-        alert('❌ Testni yakunlashda xatolik yuz berdi!');
-    }
-}
-
-// Test natijalarini ko'rsatish
-function showTestResults(correct, total, percentage) {
-    const scoreClass = percentage >= 80 ? 'score-high' :
-                      percentage >= 60 ? 'score-medium' : 'score-low';
-
-    document.getElementById('questionContainer').innerHTML = `
-        <div class="result-summary">
-            <h2>🎉 Test Yakunlandi!</h2>
-            <div class="result-score">${correct}/${total}</div>
-            <div class="result-percentage ${scoreClass}">${percentage}%</div>
-
-            <div class="result-details">
-                <div class="result-detail">
-                    <h4>✅ To'g'ri Javoblar</h4>
-                    <div style="font-size: 1.5em; font-weight: bold;">${correct}</div>
-                </div>
-                <div class="result-detail">
-                    <h4>❌ Noto'g'ri Javoblar</h4>
-                    <div style="font-size: 1.5em; font-weight: bold;">${total - correct}</div>
-                </div>
-                <div class="result-detail">
-                    <h4>📊 Umumiy Ball</h4>
-                    <div style="font-size: 1.5em; font-weight: bold;">${percentage}%</div>
-                </div>
-                <div class="result-detail">
-                    <h4>📝 Test</h4>
-                    <div style="font-size: 1.1em;">${currentTest.title}</div>
-                </div>
-            </div>
-
-            <button onclick="location.reload()" class="btn" style="margin-top: 30px; max-width: 300px;">
-                🔄 Yangi Test Topshirish
-            </button>
-        </div>
-    `;
-
-    // Navigation tugmalarni yashirish
-    document.getElementById('prevBtn').style.display = 'none';
-    document.getElementById('nextBtn').style.display = 'none';
-    document.getElementById('finishBtn').style.display = 'none';
+    alert('✅ Test muvaffaqiyatli yakunlandi! Natijalar tez orada ko\'rsatiladi.');
+    // Bu yerda test natijalarini hisoblash va saqlash logikasi bo'lishi kerak
+    showStudentInterface();
 }
 
 // Tab almashtirish
@@ -424,21 +303,17 @@ async function loadDashboard() {
     try {
         document.getElementById('statsGrid').innerHTML = '<div class="loading">📊 Statistika yuklanmoqda...</div>';
 
-        const [usersResult, testsResult, studentsResult] = await Promise.all([
+        const [usersResult, testsResult, studentsResult, adminsResult] = await Promise.all([
             supabase.from('users').select('id', { count: 'exact' }),
             supabase.from('tests').select('id', { count: 'exact' }),
-            supabase.from('students').select('id', { count: 'exact' })
+            supabase.from('students').select('id', { count: 'exact' }),
+            supabase.from('admins').select('id', { count: 'exact' })
         ]);
 
         const usersCount = usersResult.count || 0;
         const testsCount = testsResult.count || 0;
         const studentsCount = studentsResult.count || 0;
-
-        // Faol testlar sonini hisoblash
-        const { count: activeTestsCount } = await supabase
-            .from('tests')
-            .select('id', { count: 'exact' })
-            .eq('is_active', true);
+        const adminsCount = adminsResult.count || 0;
 
         const html = `
             <div class="stat-card">
@@ -446,12 +321,12 @@ async function loadDashboard() {
                 <div class="stat-label">👥 Foydalanuvchilar</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number">${testsCount}</div>
-                <div class="stat-label">📝 Jami Testlar</div>
+                <div class="stat-number">${adminsCount}</div>
+                <div class="stat-label">👨‍💼 Adminlar</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number">${activeTestsCount || 0}</div>
-                <div class="stat-label">✅ Faol Testlar</div>
+                <div class="stat-number">${testsCount}</div>
+                <div class="stat-label">📝 Testlar</div>
             </div>
             <div class="stat-card">
                 <div class="stat-number">${studentsCount}</div>
@@ -467,324 +342,6 @@ async function loadDashboard() {
     }
 }
 
-// Test yaratish funksiyasi
-async function createTest() {
-    if (!isAdmin) {
-        alert('❌ Sizda test yaratish huquqi yo\'q!');
-        return;
-    }
-
-    const code = document.getElementById('testCode').value.trim().toUpperCase();
-    const title = document.getElementById('testTitle').value.trim();
-    const openCount = parseInt(document.getElementById('openCount').value);
-    const closedCount = parseInt(document.getElementById('closedCount').value);
-
-    // Validatsiya
-    if (!code || code.length < 3) {
-        alert('❌ Test kodi kamida 3 ta belgidan iborat bo\'lishi kerak!');
-        return;
-    }
-
-    if (!title || title.length < 3) {
-        alert('❌ Test nomi kamida 3 ta belgidan iborat bo\'lishi kerak!');
-        return;
-    }
-
-    if (openCount + closedCount === 0) {
-        alert('❌ Kamida bitta savol bo\'lishi kerak!');
-        return;
-    }
-
-    if (openCount > 50 || closedCount > 50) {
-        alert('❌ Har bir tur uchun maksimal 50 ta savol!');
-        return;
-    }
-
-    try {
-        // Kod mavjudligini tekshirish
-        const { data: existingTest } = await supabase
-            .from('tests')
-            .select('*')
-            .eq('code', code)
-            .single();
-
-        if (existingTest) {
-            alert('❌ Bu kod allaqachon mavjud! Boshqa kod tanlang.');
-            return;
-        }
-    } catch (error) {
-        // Test topilmadi - davom etish mumkin
-    }
-
-    try {
-        // Testni yaratish
-        const { data: testData, error: testError } = await supabase
-            .from('tests')
-            .insert([{
-                code: code,
-                title: title,
-                admin_id: currentUser.telegram_id,
-                open_questions_count: openCount,
-                closed_questions_count: closedCount,
-                is_active: false  // Javoblar kiritilgunga qadar nofaol
-            }])
-            .select()
-            .single();
-
-        if (testError) throw testError;
-
-        // Muvaffaqiyat xabari
-        document.getElementById('createTestForm').innerHTML = `
-            <div class="success-message">
-                <h3>✅ Test muvaffaqiyatli yaratildi!</h3>
-                <p><strong>Kod:</strong> ${code}</p>
-                <p><strong>Nom:</strong> ${title}</p>
-                <p><strong>Ochiq savollar:</strong> ${openCount}</p>
-                <p><strong>Yopiq savollar:</strong> ${closedCount}</p>
-                <p><em>Endi javoblarni kiritib, testni faollashtiring.</em></p>
-            </div>
-            <button onclick="location.reload()" class="btn">🔄 Yangi Test Yaratish</button>
-        `;
-
-        // Javoblar kiritish qismini ko'rsatish
-        if (openCount > 0 || closedCount > 0) {
-            showAnswersSection(testData.id, openCount, closedCount);
-        }
-
-    } catch (error) {
-        console.error('Test yaratishda xatolik:', error);
-        alert('❌ Test yaratishda xatolik yuz berdi: ' + error.message);
-    }
-}
-
-// Javoblar kiritish qismini ko'rsatish
-function showAnswersSection(testId, openCount, closedCount) {
-    const answersSection = document.getElementById('answersSection');
-    answersSection.style.display = 'block';
-
-    let html = '<div id="answersProgress"></div>';
-
-    // Barcha savollarni bitta ro'yxatda ko'rsatish
-    html += '<div class="answers-grid">';
-
-    // Ochiq savollar
-    if (openCount > 0) {
-        html += '<div class="answers-section"><h4>📖 Ochiq Savollar Javoblari</h4>';
-        for (let i = 1; i <= openCount; i++) {
-            html += `
-                <div class="answer-row">
-                    <div class="question-number">${i} a)</div>
-                    <input type="text" id="openAnswer${i}" class="answer-field"
-                           placeholder="Javobni kiriting"
-                           onchange="saveAnswerInstant(${testId}, ${i}, 'open')" />
-                </div>
-            `;
-        }
-        html += '</div>';
-    }
-
-    // Yopiq savollar
-    if (closedCount > 0) {
-        html += '<div class="answers-section"><h4>📋 Yopiq Savollar Javoblari</h4>';
-        for (let i = 1; i <= closedCount; i++) {
-            html += `
-                <div class="answer-row">
-                    <div class="question-number">${openCount + i} a)</div>
-                    <select id="closedAnswer${i}" class="answer-field"
-                            onchange="saveAnswerInstant(${testId}, ${i}, 'closed')">
-                        <option value="">Javobni tanlang</option>
-                        <option value="A">A</option>
-                        <option value="B">B</option>
-                        <option value="C">C</option>
-                        <option value="D">D</option>
-                    </select>
-                </div>
-            `;
-        }
-        html += '</div>';
-    }
-
-    html += '</div>'; // answers-grid tugashi
-
-    html += `
-        <div class="finish-section">
-            <h4>📊 Yakunlash</h4>
-            <p>Barcha javoblarni kiritgandan keyin testni faollashtiring:</p>
-            <button onclick="finishTestCreation(${testId})" class="btn btn-success">
-                ✅ Testni Faollashtirish
-            </button>
-        </div>
-    `;
-
-    document.getElementById('answersContent').innerHTML = html;
-    updateProgress(testId);
-}
-
-// Javobni darhol saqlash (onChange event bilan)
-async function saveAnswerInstant(testId, questionNumber, questionType) {
-    const inputId = questionType === 'open' ? `openAnswer${questionNumber}` : `closedAnswer${questionNumber}`;
-    const answer = document.getElementById(inputId).value.trim();
-
-    if (!answer) return;
-
-    if (questionType === 'closed' && !['A', 'B', 'C', 'D'].includes(answer)) {
-        return;
-    }
-
-    try {
-        const { error } = await supabase
-            .from('test_answers')
-            .upsert([{
-                test_id: testId,
-                question_number: questionNumber,
-                question_type: questionType,
-                correct_answer: answer
-            }]);
-
-        if (error) throw error;
-
-        // Muvaffaqiyat belgisi
-        const inputElement = document.getElementById(inputId);
-        inputElement.style.borderColor = '#28a745';
-        inputElement.style.backgroundColor = '#d4edda';
-
-        // Progressni yangilash
-        await updateProgress(testId);
-
-    } catch (error) {
-        console.error('Javobni saqlashda xatolik:', error);
-        const inputElement = document.getElementById(inputId);
-        inputElement.style.borderColor = '#dc3545';
-        inputElement.style.backgroundColor = '#f8d7da';
-    }
-}
-
-// Javobni saqlash
-async function saveAnswer(testId, questionNumber, questionType) {
-    const inputId = questionType === 'open' ? `openAnswer${questionNumber}` : `closedAnswer${questionNumber}`;
-    const answer = document.getElementById(inputId).value.trim();
-
-    if (!answer) {
-        alert('❌ Javobni kiriting!');
-        return;
-    }
-
-    if (questionType === 'closed' && !['A', 'B', 'C', 'D'].includes(answer)) {
-        alert('❌ Faqat A, B, C yoki D ni tanlang!');
-        return;
-    }
-
-    try {
-        const { error } = await supabase
-            .from('test_answers')
-            .upsert([{
-                test_id: testId,
-                question_number: questionNumber,
-                question_type: questionType,
-                correct_answer: answer
-            }]);
-
-        if (error) throw error;
-
-        // Muvaffaqiyat belgisi
-        const container = document.getElementById(`${questionType}-${questionNumber}`);
-        container.classList.add('completed');
-        container.style.background = '#d4edda';
-        container.style.borderColor = '#28a745';
-
-        const button = container.querySelector('button');
-        button.innerHTML = '✅ Saqlandi';
-        button.disabled = true;
-        button.style.background = '#28a745';
-
-        // Progressni yangilash
-        await updateProgress(testId);
-
-    } catch (error) {
-        console.error('Javobni saqlashda xatolik:', error);
-        alert('❌ Javobni saqlashda xatolik: ' + error.message);
-    }
-}
-
-// Progress yangilash
-async function updateProgress(testId) {
-    try {
-        const { data: savedAnswers } = await supabase
-            .from('test_answers')
-            .select('*')
-            .eq('test_id', testId);
-
-        const { data: test } = await supabase
-            .from('tests')
-            .select('open_questions_count, closed_questions_count')
-            .eq('id', testId)
-            .single();
-
-        if (!test) return;
-
-        const totalAnswers = test.open_questions_count + test.closed_questions_count;
-        const savedCount = savedAnswers ? savedAnswers.length : 0;
-        const percentage = totalAnswers > 0 ? (savedCount / totalAnswers) * 100 : 0;
-
-        document.getElementById('answersProgress').innerHTML = `
-            <div style="margin-bottom: 20px;">
-                <h4>📊 Javoblar Kiritish Jarayoni</h4>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: ${percentage}%"></div>
-                </div>
-                <p>${savedCount}/${totalAnswers} javob kiritildi (${Math.round(percentage)}%)</p>
-            </div>
-        `;
-
-    } catch (error) {
-        console.error('Progress yangilashda xatolik:', error);
-    }
-}
-
-// Test yaratishni yakunlash
-async function finishTestCreation(testId) {
-    try {
-        const { data: test } = await supabase
-            .from('tests')
-            .select('*')
-            .eq('id', testId)
-            .single();
-
-        const { data: answers } = await supabase
-            .from('test_answers')
-            .select('*')
-            .eq('test_id', testId);
-
-        if (!test) {
-            alert('❌ Test topilmadi!');
-            return;
-        }
-
-        const expectedAnswers = test.open_questions_count + test.closed_questions_count;
-        const actualAnswers = answers ? answers.length : 0;
-
-        if (actualAnswers < expectedAnswers) {
-            alert(`❌ Barcha javoblarni kiriting! ${actualAnswers}/${expectedAnswers} kiritildi.`);
-            return;
-        }
-
-        // Testni faollashtirish
-        const { error } = await supabase
-            .from('tests')
-            .update({ is_active: true })
-            .eq('id', testId);
-
-        if (error) throw error;
-
-        alert('🎉 Test muvaffaqiyatli yaratildi va faollashtirildi!');
-        location.reload();
-
-    } catch (error) {
-        console.error('Test yakunlashda xatolik:', error);
-        alert('❌ Xatolik yuz berdi: ' + error.message);
-    }
-}
-
 // Foydalanuvchilarni yuklash
 async function loadUsers() {
     if (!isAdmin) return;
@@ -797,7 +354,11 @@ async function loadUsers() {
             .select('*')
             .order('created_at', { ascending: false });
 
-        if (error) throw error;
+        if (error) {
+            console.error('Foydalanuvchilar yuklanmadi:', error);
+            document.getElementById('usersList').innerHTML = '<div class="error">❌ Foydalanuvchilar yuklanmadi: ' + error.message + '</div>';
+            return;
+        }
 
         if (!users || users.length === 0) {
             document.getElementById('usersList').innerHTML = '<div class="card">📭 Hozircha foydalanuvchilar yo\'q</div>';
@@ -841,7 +402,11 @@ async function loadTests() {
             `)
             .order('created_at', { ascending: false });
 
-        if (error) throw error;
+        if (error) {
+            console.error('Testlar yuklanmadi:', error);
+            document.getElementById('testsList').innerHTML = '<div class="error">❌ Testlar yuklanmadi: ' + error.message + '</div>';
+            return;
+        }
 
         if (!tests || tests.length === 0) {
             document.getElementById('testsList').innerHTML = '<div class="card">📭 Hozircha testlar yo\'q</div>';
@@ -893,7 +458,11 @@ async function loadStudents() {
             `)
             .order('started_at', { ascending: false });
 
-        if (error) throw error;
+        if (error) {
+            console.error('O\'quvchilar yuklanmadi:', error);
+            document.getElementById('studentsList').innerHTML = '<div class="error">❌ O\'quvchilar yuklanmadi: ' + error.message + '</div>';
+            return;
+        }
 
         if (!students || students.length === 0) {
             document.getElementById('studentsList').innerHTML = '<div class="card">📭 Hozircha o\'quvchilar yo\'q</div>';
@@ -914,8 +483,8 @@ async function loadStudents() {
                         </div>
                     </div>
                     <div>${student.test_code}</div>
-                    <div>${student.score || 0}/${student.total_questions}</div>
-                    <div class="score ${scoreClass}">${student.percentage || 0}%</div>
+                    <div>${student.score}/${student.total_questions}</div>
+                    <div class="score ${scoreClass}">${student.percentage}%</div>
                 </div>
             `;
         });
@@ -945,7 +514,11 @@ async function loadResults() {
             .not('completed_at', 'is', null)
             .order('completed_at', { ascending: false });
 
-        if (error) throw error;
+        if (error) {
+            console.error('Natijalar yuklanmadi:', error);
+            document.getElementById('resultsList').innerHTML = '<div class="error">❌ Natijalar yuklanmadi: ' + error.message + '</div>';
+            return;
+        }
 
         if (!results || results.length === 0) {
             document.getElementById('resultsList').innerHTML = '<div class="card">📭 Hozircha natijalar yo\'q</div>';
@@ -974,6 +547,271 @@ async function loadResults() {
     } catch (error) {
         console.error('Natijalar yuklanmadi:', error);
         document.getElementById('resultsList').innerHTML = '<div class="error">❌ Natijalar yuklanmadi: ' + error.message + '</div>';
+    }
+}
+
+// Test yaratish funksiyasi
+async function createTest() {
+    if (!isAdmin) {
+        alert('❌ Sizda test yaratish huquqi yo\'q!');
+        return;
+    }
+
+    const code = document.getElementById('testCode').value.trim().toUpperCase();
+    const title = document.getElementById('testTitle').value.trim();
+    const openCount = parseInt(document.getElementById('openCount').value);
+    const closedCount = parseInt(document.getElementById('closedCount').value);
+
+    // Validatsiya
+    if (!code || code.length < 3) {
+        alert('❌ Test kodi kamida 3 ta belgidan iborat bo\'lishi kerak!');
+        return;
+    }
+
+    if (!title || title.length < 3) {
+        alert('❌ Test nomi kamida 3 ta belgidan iborat bo\'lishi kerak!');
+        return;
+    }
+
+    if (openCount + closedCount === 0) {
+        alert('❌ Kamida bitta savol bo\'lishi kerak!');
+        return;
+    }
+
+    if (openCount > 50 || closedCount > 50) {
+        alert('❌ Har bir tur uchun maksimal 50 ta savol!');
+        return;
+    }
+
+    try {
+        // Kod mavjudligini tekshirish
+        const existingTest = await supabase
+            .from('tests')
+            .select('*')
+            .eq('code', code)
+            .single();
+
+        if (existingTest.data) {
+            alert('❌ Bu kod allaqachon mavjud! Boshqa kod tanlang.');
+            return;
+        }
+    } catch (error) {
+        // Test topilmadi - davom etish mumkin
+    }
+
+    try {
+        // Testni yaratish
+        const { data: testData, error: testError } = await supabase
+            .from('tests')
+            .insert([{
+                code: code,
+                title: title,
+                admin_id: currentUser.telegram_id,
+                open_questions_count: openCount,
+                closed_questions_count: closedCount,
+                is_active: true
+            }])
+            .select()
+            .single();
+
+        if (testError) throw testError;
+
+        // Muvaffaqiyat xabari
+        document.getElementById('createTestForm').innerHTML = `
+            <div class="success-message">
+                <h3>✅ Test muvaffaqiyatli yaratildi!</h3>
+                <p><strong>Kod:</strong> ${code}</p>
+                <p><strong>Nom:</strong> ${title}</p>
+                <p><strong>Ochiq savollar:</strong> ${openCount}</p>
+                <p><strong>Yopiq savollar:</strong> ${closedCount}</p>
+            </div>
+            <button onclick="location.reload()" class="btn">🔄 Yangi Test Yaratish</button>
+        `;
+
+        // Javoblar kiritish qismini ko'rsatish
+        if (openCount > 0 || closedCount > 0) {
+            showAnswersSection(testData.id, openCount, closedCount);
+        }
+
+    } catch (error) {
+        console.error('Test yaratishda xatolik:', error);
+        alert('❌ Test yaratishda xatolik yuz berdi: ' + error.message);
+    }
+}
+
+// Javoblar kiritish qismini ko'rsatish
+function showAnswersSection(testId, openCount, closedCount) {
+    const answersSection = document.getElementById('answersSection');
+    answersSection.style.display = 'block';
+
+    let html = '<div id="answersProgress"></div>';
+
+    // Ochiq savollar uchun
+    if (openCount > 0) {
+        html += '<h4>📖 Ochiq Savollar Javoblari</h4>';
+        for (let i = 1; i <= openCount; i++) {
+            html += `
+                <div class="question-input" id="open-${i}">
+                    <label class="form-label">${i}-savol javobi:</label>
+                    <input type="text" id="openAnswer${i}" class="form-input"
+                           placeholder="To'g'ri javobni kiriting" />
+                    <button onclick="saveAnswer(${testId}, ${i}, 'open')" class="btn" style="margin-top: 10px;">
+                        💾 Saqlash
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    // Yopiq savollar uchun
+    if (closedCount > 0) {
+        html += '<h4>📋 Yopiq Savollar Javoblari</h4>';
+        for (let i = 1; i <= closedCount; i++) {
+            html += `
+                <div class="question-input" id="closed-${i}">
+                    <label class="form-label">${i}-savol javobi:</label>
+                    <select id="closedAnswer${i}" class="form-input">
+                        <option value="">Javobni tanlang</option>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                    </select>
+                    <button onclick="saveAnswer(${testId}, ${i}, 'closed')" class="btn" style="margin-top: 10px;">
+                        💾 Saqlash
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    html += `
+        <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+            <h4>📊 Yakunlash</h4>
+            <p>Barcha javoblarni kiritgandan keyin testni faollashtiring:</p>
+            <button onclick="finishTestCreation(${testId})" class="btn btn-success">
+                ✅ Testni Yakunlash
+            </button>
+        </div>
+    `;
+
+    document.getElementById('answersContent').innerHTML = html;
+    updateProgress(testId, openCount, closedCount);
+}
+
+// Javobni saqlash
+async function saveAnswer(testId, questionNumber, questionType) {
+    const inputId = questionType === 'open' ? `openAnswer${questionNumber}` : `closedAnswer${questionNumber}`;
+    const answer = document.getElementById(inputId).value.trim();
+
+    if (!answer) {
+        alert('❌ Javobni kiriting!');
+        return;
+    }
+
+    if (questionType === 'closed' && !['A', 'B', 'C', 'D'].includes(answer)) {
+        alert('❌ Faqat A, B, C yoki D ni tanlang!');
+        return;
+    }
+
+    try {
+        const { error } = await supabase
+            .from('test_answers')
+            .upsert([{
+                test_id: testId,
+                question_number: questionNumber,
+                question_type: questionType,
+                correct_answer: answer
+            }]);
+
+        if (error) throw error;
+
+        // Muvaffaqiyat belgisi
+        const container = document.getElementById(`${questionType}-${questionNumber}`);
+        container.style.background = '#d4edda';
+        container.style.borderColor = '#28a745';
+
+        const button = container.querySelector('button');
+        button.innerHTML = '✅ Saqlandi';
+        button.disabled = true;
+        button.style.background = '#28a745';
+
+        // Progressni yangilash
+        await updateProgress(testId, 0, 0);
+
+    } catch (error) {
+        console.error('Javobni saqlashda xatolik:', error);
+        alert('❌ Javobni saqlashda xatolik: ' + error.message);
+    }
+}
+
+// Progress yangilash
+async function updateProgress(testId, openCount, closedCount) {
+    try {
+        const { data: savedAnswers } = await supabase
+            .from('test_answers')
+            .select('*')
+            .eq('test_id', testId);
+
+        const { data: test } = await supabase
+            .from('tests')
+            .select('open_questions_count, closed_questions_count')
+            .eq('id', testId)
+            .single();
+
+        const totalAnswers = test.open_questions_count + test.closed_questions_count;
+        const savedCount = savedAnswers ? savedAnswers.length : 0;
+        const percentage = totalAnswers > 0 ? (savedCount / totalAnswers) * 100 : 0;
+
+        document.getElementById('answersProgress').innerHTML = `
+            <div style="margin-bottom: 20px;">
+                <h4>📊 Javoblar Kiritish Jarayoni</h4>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${percentage}%"></div>
+                </div>
+                <p>${savedCount}/${totalAnswers} javob kiritildi (${Math.round(percentage)}%)</p>
+            </div>
+        `;
+
+    } catch (error) {
+        console.error('Progress yangilashda xatolik:', error);
+    }
+}
+
+// Test yaratishni yakunlash
+async function finishTestCreation(testId) {
+    try {
+        const { data: test } = await supabase
+            .from('tests')
+            .select('*')
+            .eq('id', testId)
+            .single();
+
+        const { data: answers } = await supabase
+            .from('test_answers')
+            .select('*')
+            .eq('test_id', testId);
+
+        const expectedAnswers = test.open_questions_count + test.closed_questions_count;
+        const actualAnswers = answers ? answers.length : 0;
+
+        if (actualAnswers < expectedAnswers) {
+            alert(`❌ Barcha javoblarni kiriting! ${actualAnswers}/${expectedAnswers} kiritildi.`);
+            return;
+        }
+
+        // Testni faollashtirish
+        await supabase
+            .from('tests')
+            .update({ is_active: true })
+            .eq('id', testId);
+
+        alert('🎉 Test muvaffaqiyatli yaratildi va faollashtirildi!');
+        location.reload();
+
+    } catch (error) {
+        console.error('Test yakunlashda xatolik:', error);
+        alert('❌ Xatolik yuz berdi: ' + error.message);
     }
 }
 
@@ -1072,13 +910,6 @@ async function deleteTest(testId) {
     }
 
     try {
-        // Avval test bilan bog'liq barcha ma'lumotlarni o'chirish
-        await Promise.all([
-            supabase.from('test_answers').delete().eq('test_id', testId),
-            supabase.from('student_answers').delete().eq('test_id', testId)
-        ]);
-
-        // Keyin testning o'zini o'chirish
         const { error } = await supabase
             .from('tests')
             .delete()
@@ -1106,17 +937,7 @@ async function viewTestDetails(testId) {
 
         const test = testResult.data;
         const answers = answersResult.data || [];
-
-        if (!test) {
-            alert('❌ Test topilmadi!');
-            return;
-        }
-
-        // Test kodiga mos studentlarni topish
-        const { data: students } = await supabase
-            .from('students')
-            .select('*')
-            .eq('test_code', test.code);
+        const students = studentsResult.data || [];
 
         let detailsHtml = `
             <h4>📋 Test Tafsilotlari</h4>
@@ -1125,14 +946,14 @@ async function viewTestDetails(testId) {
             <p><strong>Status:</strong> ${test.is_active ? '✅ Faol' : '❌ Nofaol'}</p>
             <p><strong>Savollar:</strong> Ochiq: ${test.open_questions_count}, Yopiq: ${test.closed_questions_count}</p>
             <p><strong>Javoblar soni:</strong> ${answers.length}</p>
-            <p><strong>Ishtirokchilar:</strong> ${students ? students.length : 0}</p>
+            <p><strong>Ishtirokchilar:</strong> ${students.length}</p>
             <p><strong>Yaratilgan:</strong> ${new Date(test.created_at).toLocaleDateString('uz-UZ')}</p>
         `;
 
         if (answers.length > 0) {
             detailsHtml += '<h5>📝 To\'g\'ri Javoblar:</h5>';
             answers.forEach(answer => {
-                detailsHtml += `<p>${answer.question_type === 'open' ? 'Ochiq' : 'Yopiq'} ${answer.question_number}: <strong>${answer.correct_answer}</strong></p>`;
+                detailsHtml += `<p>${answer.question_type} ${answer.question_number}: <strong>${answer.correct_answer}</strong></p>`;
             });
         }
 
@@ -1203,16 +1024,10 @@ async function clearOldData() {
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
         // 30 kundan eski ma'lumotlarni o'chirish
-        await Promise.all([
-            supabase
-                .from('students')
-                .delete()
-                .lt('created_at', thirtyDaysAgo.toISOString()),
-            supabase
-                .from('student_answers')
-                .delete()
-                .lt('created_at', thirtyDaysAgo.toISOString())
-        ]);
+        await supabase
+            .from('students')
+            .delete()
+            .lt('created_at', thirtyDaysAgo.toISOString());
 
         alert('✅ 30 kundan eski ma\'lumotlar o\'chirildi!');
         loadAllData();
@@ -1236,187 +1051,12 @@ async function loadAllData() {
     }
 }
 
-// Keyboard navigation uchun
-document.addEventListener('keydown', function(event) {
-    if (document.getElementById('testInterface').style.display !== 'none') {
-        if (event.key === 'ArrowLeft' && currentQuestionIndex > 0) {
-            previousQuestion();
-        } else if (event.key === 'ArrowRight' && currentQuestionIndex < testQuestions.length - 1) {
-            nextQuestion();
-        } else if (event.key === 'Enter' && currentQuestionIndex === testQuestions.length - 1) {
-            finishTest();
-        }
-    }
-});
-
 // Sahifa yuklanganda
 document.addEventListener('DOMContentLoaded', async () => {
     await checkUserRole();
 
     // Faqat adminlar uchun avtomatik yangilash
     if (isAdmin) {
-        setInterval(loadAllData, 60000); // Har minutda yangilash
-    }
-
-    // Form validatsiya
-    const inputs = document.querySelectorAll('.form-input');
-    inputs.forEach(input => {
-        input.addEventListener('input', function() {
-            if (this.value.trim()) {
-                this.style.borderColor = '#28a745';
-            } else {
-                this.style.borderColor = '#ddd';
-            }
-        });
-    });
-});
-
-// Window resize events uchun
-window.addEventListener('resize', function() {
-    // Mobile optimizatsiya
-    if (window.innerWidth <= 768) {
-        document.querySelectorAll('.form-grid').forEach(grid => {
-            grid.style.gridTemplateColumns = '1fr';
-        });
-    } else {
-        document.querySelectorAll('.form-grid').forEach(grid => {
-            grid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(250px, 1fr))';
-        });
+        setInterval(loadAllData, 30000);
     }
 });
-
-// PWA support uchun
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/sw.js')
-            .then(function(registration) {
-                console.log('ServiceWorker registration successful');
-            })
-            .catch(function(error) {
-                console.log('ServiceWorker registration failed');
-            });
-    });
-}
-
-// Online/Offline status
-window.addEventListener('online', function() {
-    document.body.style.filter = 'none';
-    if (document.querySelector('.offline-message')) {
-        document.querySelector('.offline-message').remove();
-    }
-});
-
-window.addEventListener('offline', function() {
-    document.body.style.filter = 'grayscale(100%)';
-    if (!document.querySelector('.offline-message')) {
-        const offlineMsg = document.createElement('div');
-        offlineMsg.className = 'offline-message';
-        offlineMsg.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: #f44336;
-            color: white;
-            padding: 10px;
-            text-align: center;
-            z-index: 9999;
-        `;
-        offlineMsg.textContent = '⚠️ Internet ulanishi yo\'q. Ba\'zi funksiyalar ishlamasligi mumkin.';
-        document.body.appendChild(offlineMsg);
-    }
-});
-
-// Auto-save function for test answers
-let autoSaveTimer;
-function autoSaveAnswer() {
-    clearTimeout(autoSaveTimer);
-    autoSaveTimer = setTimeout(() => {
-        if (document.getElementById('currentAnswer')) {
-            saveCurrentAnswer();
-        }
-    }, 2000); // 2 soniya kutib saqlash
-}
-
-// Add auto-save event listeners when test interface is shown
-function addAutoSaveListeners() {
-    // Timeout orqali DOM elementini kutish
-    setTimeout(() => {
-        const answerInput = document.getElementById('currentAnswer');
-        if (answerInput) {
-            answerInput.addEventListener('input', autoSaveAnswer);
-        }
-    }, 100);
-}
-
-// Hozirgi savolni ko'rsatganda ham auto-save qo'shish
-function showCurrentQuestion() {
-    if (currentQuestionIndex >= testQuestions.length) {
-        finishTest();
-        return;
-    }
-
-    const question = testQuestions[currentQuestionIndex];
-    const questionContainer = document.getElementById('questionContainer');
-
-    // Progress yangilash
-    document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
-    const progressPercent = ((currentQuestionIndex + 1) / testQuestions.length) * 100;
-    document.getElementById('progressFill').style.width = progressPercent + '%';
-
-    // Savol ko'rsatish
-    let questionHtml = `
-        <div class="question-title">
-            ${question.question_type === 'open' ? '📖 Ochiq' : '📋 Yopiq'} Savol ${currentQuestionIndex + 1}
-        </div>
-        <div class="question-text">
-            Savolga javob bering:
-        </div>
-    `;
-
-    if (question.question_type === 'open') {
-        questionHtml += `
-            <textarea
-                id="currentAnswer"
-                class="answer-input"
-                placeholder="Javobingizni bu yerga yozing..."
-                oninput="saveCurrentAnswer()"
-            >${studentAnswers[currentQuestionIndex] || ''}</textarea>
-        `;
-    } else {
-        questionHtml += `
-            <div class="answer-options">
-                <div class="answer-option ${studentAnswers[currentQuestionIndex] === 'A' ? 'selected' : ''}"
-                     onclick="selectClosedAnswer('A')">
-                    <input type="radio" name="answer" value="A" ${studentAnswers[currentQuestionIndex] === 'A' ? 'checked' : ''}>
-                    <span>A) Variant A</span>
-                </div>
-                <div class="answer-option ${studentAnswers[currentQuestionIndex] === 'B' ? 'selected' : ''}"
-                     onclick="selectClosedAnswer('B')">
-                    <input type="radio" name="answer" value="B" ${studentAnswers[currentQuestionIndex] === 'B' ? 'checked' : ''}>
-                    <span>B) Variant B</span>
-                </div>
-                <div class="answer-option ${studentAnswers[currentQuestionIndex] === 'C' ? 'selected' : ''}"
-                     onclick="selectClosedAnswer('C')">
-                    <input type="radio" name="answer" value="C" ${studentAnswers[currentQuestionIndex] === 'C' ? 'checked' : ''}>
-                    <span>C) Variant C</span>
-                </div>
-                <div class="answer-option ${studentAnswers[currentQuestionIndex] === 'D' ? 'selected' : ''}"
-                     onclick="selectClosedAnswer('D')">
-                    <input type="radio" name="answer" value="D" ${studentAnswers[currentQuestionIndex] === 'D' ? 'checked' : ''}>
-                    <span>D) Variant D</span>
-                </div>
-            </div>
-        `;
-    }
-
-    questionContainer.innerHTML = questionHtml;
-
-    // Navigation tugmalar
-    document.getElementById('prevBtn').style.display = currentQuestionIndex > 0 ? 'block' : 'none';
-    document.getElementById('nextBtn').style.display = currentQuestionIndex < testQuestions.length - 1 ? 'block' : 'none';
-    document.getElementById('finishBtn').style.display = currentQuestionIndex === testQuestions.length - 1 ? 'block' : 'none';
-
-    // Auto-save listener qo'shish
-    addAutoSaveListeners();
-}
